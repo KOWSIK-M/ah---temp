@@ -1,0 +1,33 @@
+# Production Profile - PostgreSQL Database
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+cookie:
+  secure: true # Required for SameSite=None (Cross-site Vercel <-> Render)
+
+# Security - Override in environment
+jwt:
+  secret: ${JWT_SECRET}
+
+# CORS - Frontend domain
+cors:
+  allowed-origins: ${CORS_ORIGINS:https://anjaneya-herbals.vercel.app}
+
+logging:
+  level:
+    com.ah.web: INFO
+    org.springframework.security: WARN
+
+app:
+  oauth2:
+    redirect-uri: ${APP_OAUTH2_REDIRECT_URI:https://anjaneya-herbals.vercel.app/oauth2/redirect}
