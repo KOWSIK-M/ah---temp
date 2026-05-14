@@ -1,0 +1,26 @@
+# Development Profile - PostgreSQL
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate   # Flyway manages schema; Hibernate validates only
+    show-sql: true
+
+# Development CORS - allow localhost
+cors:
+  allowed-origins: http://localhost:5173,http://localhost:3000
+
+logging:
+  level:
+    com.ah.web: DEBUG
+    org.springframework.security: DEBUG
+
+# Expose full exception details in API error responses (dev only)
+app:
+  show-error-details: true

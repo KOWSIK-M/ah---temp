@@ -1,0 +1,96 @@
+{
+  "conversationId": "7d140c22-523d-48e6-89fa-df0ace9febf2",
+  "title": "markdown # Anjaneya Herbals - Spring Boot Backend ...",
+  "requesterUsername": "2200030358cseh-code",
+  "responderUsername": "GitHub Copilot",
+  "turns": [
+    {
+      "message": {
+        "text": "markdown\r\n# Anjaneya Herbals - Spring Boot Backend Requirements\r\nI am building the backend for an e-commerce website named **Anjaneya Herbals**, an Ayurvedic products store specializing in traditional spices, herbal powders, and wellness products.\r\n## Project Context (from existing React frontend)\r\nThe frontend is built with React + Vite + Tailwind CSS. It already has:\r\n- A product listing with categories\r\n- Product cards showing: [id](cci:1://file:///d:/AH/AH-new/Anjaneya-Herbals/src/components/Hero.jsx:34:2-34:92), `name`, `price`, `oldPrice`, `image`, `rating`, `reviews`, `sale`\r\n- Categories: `Spices`, `Herbal Powders`, `Hair Care`, `Face Care`, `Body Care`, `Dry Fruits`\r\n- User authentication flows (login/register pages exist)\r\n- Cart functionality (context-based)\r\n- Checkout flow ready for payment integration\r\n---\r\n## Backend Requirements\r\n### Technology Stack\r\n- **Framework**: Spring Boot 3.x (Java 17+)\r\n- **Architecture**: Clean layered architecture (Controller → Service → Repository)\r\n- **API Style**: RESTful with JSON responses\r\n- **Scale**: Small catalog (~50-200 products), but production-ready design\r\n---\r\n## Functional Requirements\r\n### 1. Product Management\r\n```json\r\n// Product Entity Fields (matching frontend)\r\n{\r\n  \"id\": \"Long\",\r\n  \"name\": \"String\",\r\n  \"description\": \"String\",\r\n  \"price\": \"BigDecimal\",\r\n  \"oldPrice\": \"BigDecimal (nullable)\",\r\n  \"imageUrl\": \"String\",\r\n  \"rating\": \"Double (1.0-5.0)\",\r\n  \"reviewCount\": \"Integer\",\r\n  \"onSale\": \"Boolean\",\r\n  \"stock\": \"Integer\",\r\n  \"categoryId\": \"Long\",\r\n  \"createdAt\": \"Timestamp\",\r\n  \"updatedAt\": \"Timestamp\"\r\n}\r\n2. Category Management\r\njson\r\n// Category Entity (matching frontend categories)\r\n{\r\n  \"id\": \"Long\",\r\n  \"name\": \"String\", // Spices, Herbal Powders, Hair Care, Face Care, Body Care, Dry Fruits\r\n  \"slug\": \"String\", // spices, herbal-powders, hair-care, etc.\r\n  \"imageUrl\": \"String\",\r\n  \"description\": \"String\",\r\n  \"displayOrder\": \"Integer\"\r\n}\r\n3. User Management\r\nRegistration, Login, Logout\r\nProfile management (name, email, phone, addresses)\r\nPassword reset flow\r\nRole-based: CUSTOMER, ADMIN\r\n4. Order Management\r\nCreate order from cart\r\nOrder history for users\r\nOrder status tracking: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED\r\nAdmin order management\r\n5. Cart Management\r\nAdd/remove/update cart items\r\nPersist cart on server (for logged-in users)\r\n6. Payment Gateway Readiness\r\nDesign for Razorpay integration (Indian audience primary)\r\nWebhook endpoint for payment confirmation\r\nOrder status update on payment success/failure\r\nTechnical Requirements\r\nDatabase\r\nRecommendation: PostgreSQL (production-ready, free tier on Supabase/Railway/Render)\r\nDesign schema with proper relationships and indexes\r\nInclude seed data for the 6 categories\r\nSecurity\r\nJWT-based authentication (Access Token: 15min, Refresh Token: 7 days)\r\nBCrypt password hashing\r\nRole-based authorization (@PreAuthorize)\r\nCORS configuration for frontend origin\r\nAPI Endpoints Needed\r\n# Public\r\nGET    /api/products              - List products (with filters: category, search, sort)\r\nGET    /api/products/{id}         - Product details\r\nGET    /api/categories            - List categories\r\n# Auth\r\nPOST   /api/auth/register         - User registration\r\nPOST   /api/auth/login            - User login (returns JWT)\r\nPOST   /api/auth/refresh          - Refresh access token\r\nPOST   /api/auth/logout           - Invalidate tokens\r\n# Protected (Customer)\r\nGET    /api/users/me              - Current user profile\r\nPUT    /api/users/me              - Update profile\r\nGET    /api/cart                  - Get cart\r\nPOST   /api/cart                  - Add to cart\r\nDELETE /api/cart/{itemId}         - Remove from cart\r\nPOST   /api/orders                - Place order\r\nGET    /api/orders                - Order history\r\n# Protected (Admin)\r\nPOST   /api/admin/products        - Create product\r\nPUT    /api/admin/products/{id}   - Update product\r\nDELETE /api/admin/products/{id}   - Delete product\r\nGET    /api/admin/orders          - All orders\r\nPUT    /api/admin/orders/{id}     - Update order status\r\nImage Storage Strategy\r\nStore images in Cloudinary (free tier: 25GB)\r\nOR use Supabase Storage (if using Supabase for DB)\r\nStore only the URL in the database\r\nProvide an admin endpoint for image upload that returns the CDN URL\r\nConfiguration\r\nUse application.yml with profiles: dev, prod\r\nEnvironment variables for secrets (DB credentials, JWT secret, Cloudinary keys)\r\nError Handling\r\nGlobal exception handler with consistent error response format:\r\njson\r\n{\r\n  \"timestamp\": \"2024-12-23T18:00:00Z\",\r\n  \"status\": 400,\r\n  \"error\": \"Bad Request\",\r\n  \"message\": \"Validation failed\",\r\n  \"path\": \"/api/auth/register\",\r\n  \"details\": [\"Email is required\", \"Password must be at least 8 characters\"]\r\n}\r\nDeployment Recommendations (Low Cost)\r\nRailway.app - $5/month for hobby tier, easy Spring Boot deploy\r\nRender.com - Free tier with auto-sleep, PostgreSQL included\r\nFly.io - Free tier with 3 shared VMs\r\nDeliverables Expected\r\nComplete database schema (SQL or JPA entities)\r\nSpring Boot project structure with all dependencies\r\nAll entity, repository, service, and controller classes\r\nJWT security configuration\r\nCORS configuration for React frontend\r\nSeed data for categories\r\napplication.yml with dev/prod profiles\r\nDockerfile for deployment\r\nREADME with setup instructions\r\nNotes\r\nKeep the solution clean, scalable, and cost-efficient\r\nFrontend runs on http://localhost:5173 during development\r\nAdmin panel can be a separate route in the same frontend (no separate admin app needed)\r\nStart implementation according to this plan"
+      },
+      "references": [],
+      "ignoredSkills": [],
+      "userLanguage": "en",
+      "source": "panel",
+      "model": "Auto",
+      "chatMode": "Agent",
+      "customChatModeId": "file:///c%3A/snapshot/copilot-client/dist/assets/agents/Plan.agent.md",
+      "needToolCallConfirmation": true,
+      "turnId": "eac7432a-c222-4f14-9df4-f7de2867dac7",
+      "role": "user",
+      "timestamp": "2025-12-23T18:20:28.615031400Z"
+    },
+    {
+      "reply": {
+        "annotations": [],
+        "references": [],
+        "hideText": false,
+        "notifications": [],
+        "followups": [],
+        "errorMessages": [
+          {
+            "error": {
+              "message": "Oops, the model is not supported. Please try again.",
+              "code": 400
+            }
+          }
+        ],
+        "editAgentRounds": [],
+        "panelMessages": [],
+        "steps": [],
+        "agentMessages": [],
+        "data": {},
+        "modelName": "GPT-5 mini",
+        "billingMultiplier": 1.0
+      },
+      "turnId": "dd54b221-0c4c-4731-953e-46b9ba14e7e2",
+      "role": "copilot",
+      "timestamp": "2025-12-23T18:20:28.897290300Z"
+    },
+    {
+      "message": {
+        "text": "Save the resulting plan as is into a file (`plan-${camelCaseName}.prompt.md` without frontmatter) for further refinement."
+      },
+      "references": [],
+      "ignoredSkills": [],
+      "userLanguage": "en",
+      "source": "panel",
+      "model": "Auto",
+      "chatMode": "Agent",
+      "customChatModeId": "Agent",
+      "needToolCallConfirmation": true,
+      "turnId": "049184ae-e658-425f-a8bd-f17b7ba2d6fe",
+      "role": "user",
+      "timestamp": "2025-12-23T18:20:35.074375400Z"
+    },
+    {
+      "reply": {
+        "annotations": [],
+        "references": [],
+        "hideText": false,
+        "notifications": [],
+        "followups": [],
+        "errorMessages": [
+          {
+            "error": {
+              "message": "Oops, the model is not supported. Please try again.",
+              "code": 400
+            }
+          }
+        ],
+        "editAgentRounds": [],
+        "panelMessages": [],
+        "steps": [],
+        "agentMessages": [],
+        "data": {},
+        "modelName": "GPT-5 mini",
+        "billingMultiplier": 1.0
+      },
+      "turnId": "b8ef89fc-8ccd-414a-a438-f14f372d7ed7",
+      "role": "copilot",
+      "timestamp": "2025-12-23T18:20:35.122994100Z"
+    }
+  ],
+  "creationDate": "2025-12-23T18:20:28.611996200Z",
+  "lastMessageDate": "2025-12-23T18:20:35.432315700Z"
+}

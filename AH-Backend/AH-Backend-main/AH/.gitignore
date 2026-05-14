@@ -1,0 +1,82 @@
+# Maven / Java
+/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDEs
+.idea/
+.project
+.classpath
+*.iml
+.settings/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+/logs/
+*.log
+
+# Environment files
+
+.env
+.env.*
+
+# Eclipse metadata
+.metadata/
+
+# Maven wrapper
+/mvnw
+/mvnw.cmd
+
+# Local maven repository (uncomment if needed)
+#/.m2/
+
+# Build output
+/target/
+
+# Temporary files
+*.tmp
+
+# Spring AI model cache (if any local files are ever downloaded)
+src/main/resources/onnx/
+
+# IntelliJ
+out/
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
