@@ -70,7 +70,7 @@ spring:
       # Free key → https://console.groq.com → API Keys → Create
       # Free tier: 14,400 req/day · 6,000 tokens/min · no CC needed ever
       openai:
-        api-key: ${GROQ_API_KEY:}
+        api-key: ${GROQ_API_KEY}
         base-url: https://api.groq.com/openai
         chat:
           options:
@@ -130,7 +130,7 @@ server:
 # used by @Value("${jina.api-key:}") in AiConfig.java
 # Free key → https://jina.ai → Sign Up → API Key
 jina:
-  api-key: ${JINA_API_KEY:}
+  api-key: ${JINA_API_KEY}
 
 # Razorpay Payment Gateway
 # Get keys from: https://dashboard.razorpay.com/app/keys

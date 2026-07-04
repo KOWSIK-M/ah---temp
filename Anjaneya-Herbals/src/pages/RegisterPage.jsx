@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Phone, Eye, EyeOff, ArrowLeft, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { authApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
+    const { register } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -35,8 +36,7 @@ const RegisterPage = () => {
         setLoading(true);
 
         try {
-            // Call backend API to register
-            const response = await authApi.register({
+            const response = await register({
                 email: formData.email,
                 password: formData.password,
                 firstName: formData.firstName,
@@ -44,10 +44,10 @@ const RegisterPage = () => {
                 phone: formData.phone || null
             });
 
-            // Dispatch login event for other components
-            window.dispatchEvent(new Event('authChange'));
+            if (!response) {
+                return;
+            }
 
-            toast.success('Account created successfully!');
             navigate('/');
         } catch (error) {
             toast.error(error.message || 'Registration failed');

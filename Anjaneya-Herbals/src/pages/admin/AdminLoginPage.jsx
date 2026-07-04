@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLoginPage = () => {
     const navigate = useNavigate();
+    const { login, logout } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -15,10 +16,14 @@ const AdminLoginPage = () => {
         setLoading(true);
 
         try {
-            const response = await authApi.login(email, password);
+            const response = await login(email, password);
             
+            if (!response) {
+                return;
+            }
+
             if (response.user?.role !== 'ADMIN') {
-                await authApi.logout();
+                await logout();
                 setError('Access denied. Admin privileges required.');
                 return;
             }

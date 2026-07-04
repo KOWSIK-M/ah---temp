@@ -5,10 +5,13 @@ import com.ah.web.dto.request.RefreshTokenRequest;
 import com.ah.web.dto.request.RegisterRequest;
 import com.ah.web.dto.response.AuthResponse;
 import com.ah.web.dto.response.MessageResponse;
+import com.ah.web.exception.BadRequestException;
+import com.ah.web.exception.UnauthorizedException;
 import com.ah.web.service.AuthService;
 import com.ah.web.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,16 +47,20 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refreshToken(jakarta.servlet.http.HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = cookieUtil.getCookie(request, "refreshToken");
         if (refreshToken == null) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         RefreshTokenRequest tokenRequest = new RefreshTokenRequest();
         tokenRequest.setRefreshToken(refreshToken);
-        
-        AuthResponse authResponse = authService.refreshToken(tokenRequest);
-        cookieUtil.createAccessTokenCookie(response, authResponse.getAccessToken());
-        cookieUtil.createRefreshTokenCookie(response, authResponse.getRefreshToken());
-        return ResponseEntity.ok(authResponse);
+
+        try {
+            AuthResponse authResponse = authService.refreshToken(tokenRequest);
+            cookieUtil.createAccessTokenCookie(response, authResponse.getAccessToken());
+            cookieUtil.createRefreshTokenCookie(response, authResponse.getRefreshToken());
+            return ResponseEntity.ok(authResponse);
+        } catch (UnauthorizedException | BadRequestException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @PostMapping("/logout")

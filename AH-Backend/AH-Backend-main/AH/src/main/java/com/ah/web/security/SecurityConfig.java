@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
@@ -72,6 +73,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/chat").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // Frontend routes (SPA)
+                        .requestMatchers("/login", "/register", "/oauth2/redirect").permitAll()
+                        // Static assets (use PathRequest helper to avoid invalid pattern parsing)
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         // Admin endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // All other endpoints require authentication
