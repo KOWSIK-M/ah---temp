@@ -113,8 +113,10 @@ cors:
 # Cloudinary Configuration
 cloudinary:
   cloud-name: dlgwz9tj9
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+  # Media uploads are optional during local development. Admin image upload
+  # endpoints require these values in deployed environments.
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
   folder: ""
 
 # Contact Form Settings
