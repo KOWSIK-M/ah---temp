@@ -3,17 +3,16 @@ import com.ah.web.dto.request.ChatRequest;
 import com.ah.web.repository.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.vectorstore.VectorStore;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 class RagChatServiceTest {
- VectorStore vectors; ProductRepository products; ChatClient.Builder builder; RagChatService service;
+ VectorStore vectors; ProductRepository products; RagChatService service;
  @BeforeEach void setup() throws Exception {
-  vectors=mock(VectorStore.class);products=mock(ProductRepository.class);builder=mock(ChatClient.Builder.class);
+  vectors=mock(VectorStore.class);products=mock(ProductRepository.class);
   when(products.findAll()).thenReturn(List.of());
-  service=new RagChatService(builder,vectors,products,new ApprovedKnowledge(new ObjectMapper()));
+  service=new RagChatService(vectors,products,new ApprovedKnowledge(new ObjectMapper()));
  }
  private String ask(String q){ChatRequest r=new ChatRequest();r.setMessage(q);return service.chat(r).getReply();}
  @Test void harmfulAndInjectionPromptsNeverReachRetrieval(){

@@ -1,6 +1,11 @@
-# Default developer profile: Java runs on the host; PostgreSQL and Ollama run
-# through compose.local.yml. Every value remains overrideable from a local .env.
+# Default developer profile: Java runs on the host; PostgreSQL and the small
+# Ollama embedding model run through compose.local.yml.
 spring:
+  autoconfigure:
+    exclude:
+      # Local RAG selects reviewed passages deterministically; no chat LLM is loaded.
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration
+      - org.springframework.ai.model.chat.client.autoconfigure.ChatClientAutoConfiguration
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/anjaneya_herbals}
     username: ${DATABASE_USERNAME:anjaneya}
@@ -8,20 +13,17 @@ spring:
   jpa:
     show-sql: true
   ai:
-    openai:
-      # Ollama's OpenAI-compatible endpoint. It ignores this non-secret key.
-      api-key: ${AI_CHAT_API_KEY:ollama}
-      base-url: ${AI_CHAT_BASE_URL:http://localhost:11434}
-      chat:
-        options:
-          model: ${AI_CHAT_MODEL:llama3.2}
+    vectorstore:
+      pgvector:
+        # This profile owns a separate, lightweight local vector index dimension.
+        dimensions: 384
 
 ai:
   embedding:
     api-key: ${AI_EMBEDDING_API_KEY:ollama}
     base-url: ${AI_EMBEDDING_BASE_URL:http://localhost:11434}
-    # mxbai-embed-large produces 1024 dimensions, matching pgvector config.
-    model: ${AI_EMBEDDING_MODEL:mxbai-embed-large}
+    # all-minilm is a 46 MB local embedding model with 384 dimensions.
+    model: ${AI_EMBEDDING_MODEL:all-minilm}
 
 app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}

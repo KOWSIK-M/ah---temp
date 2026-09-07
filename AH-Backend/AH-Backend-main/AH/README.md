@@ -36,28 +36,33 @@ The backend has four intentional environments:
 
 | Profile | Use | AI provider |
 |---|---|---|
-| `local` (default) | Developer machine | Local Ollama: `llama3.2` and `mxbai-embed-large` |
+| `local` (default) | Developer machine | Deterministic RAG with local Ollama `all-minilm` embeddings |
 | `dev` | Shared development service | Configurable hosted services |
 | `test` | Automated tests | Mocked AI and in-memory database |
 | `prod` | Deployed service | Environment-provided hosted services |
 
-### Run locally with local AI
+### Run locally with lightweight AI
 
 1. Copy `.env.example` to `.env` and set a non-placeholder `JWT_SECRET`.
-2. Start the local database and Ollama services:
+2. Start the local database and Ollama services, then pull the 46 MB embedding model. The product assistant does not download or use a local chat model.
 
    ```bash
    docker compose -f compose.local.yml up -d
-   docker compose -f compose.local.yml exec ollama ollama pull llama3.2
-   docker compose -f compose.local.yml exec ollama ollama pull mxbai-embed-large
+   docker compose -f compose.local.yml exec ollama ollama pull all-minilm
+   ```
+
+   If you previously ran the old 1024-dimension model locally, clear only its local vector index before starting the backend:
+
+   ```bash
+   docker compose -f compose.local.yml exec database psql -U anjaneya -d anjaneya_herbals -c "DROP TABLE IF EXISTS vector_store;"
    ```
 
 3. Start the Spring backend with `mvn spring-boot:run`.
 4. In `Anjaneya-Herbals`, copy `.env.example` to `.env.local` and run `npm run dev`.
 
 The local frontend calls `http://localhost:8888/api`; the backend uses the local
-PostgreSQL and Ollama containers. After the first product import, use the admin
-embedding re-index endpoint to build the local catalog vector index.
+PostgreSQL and small Ollama embedding container. After the first product import,
+use the admin embedding re-index endpoint to build the local catalog vector index.
 
 ### Deploy
 
@@ -140,9 +145,9 @@ cart and price calculation; the browser never supplies the payment amount.
 The Vaidya assistant can use only current catalog records plus the reviewed,
 versioned material in `src/main/resources/knowledge/approved.json`. It rejects
 unsafe, medical-treatment, prompt-injection, and unrelated requests before
-retrieval. It returns approved source passages and catalog cards; it does not
-render open-ended model advice. After changing catalog content or approved
-knowledge, use the admin embedding re-index endpoint.
+retrieval. It assembles approved source passages and catalog cards
+deterministically; it does not generate open-ended model advice. After changing
+catalog content or approved knowledge, use the admin embedding re-index endpoint.
 
 ### Docker
 

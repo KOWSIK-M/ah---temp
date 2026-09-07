@@ -10,14 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Manually wires the embedding client for the selected environment. Both Jina
- * and Ollama expose OpenAI-compatible embedding endpoints.
- *
- * Spring AI's auto-configured OpenAiChatModel (from application.yml) handles the
- * ChatClient/ChatModel bean pointing to Groq. This class overrides only the
- * EmbeddingModel bean to point to Jina instead, avoiding any ONNX downloads.
- *
- * The selected embedding model must output 1024 dimensions, matching pgvector.
+ * Manually wires the embedding client for the selected environment. Jina and
+ * Ollama expose OpenAI-compatible embedding endpoints. The configured pgvector
+ * dimension must match the selected embedding model.
  */
 @Configuration
 @org.springframework.context.annotation.Profile("!test")
@@ -39,7 +34,7 @@ public class AiConfig {
      */
     @Bean
     @Primary
-    public OpenAiEmbeddingModel jinaEmbeddingModel() {
+    public OpenAiEmbeddingModel embeddingModel() {
         // The base URL intentionally omits /v1 because Spring AI appends it.
         OpenAiApi embeddingApi = OpenAiApi.builder()
                 .baseUrl(embeddingBaseUrl)
