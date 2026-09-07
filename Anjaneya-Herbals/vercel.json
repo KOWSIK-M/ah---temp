@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://129.225.88.110:8888/api/:path*"
+      "destination": "https://anjaneya-herbals-api-964046018095.asia-south1.run.app/api/:path*"
     },
     {
       "source": "/oauth2/:path*",
-      "destination": "http://129.225.88.110:8888/oauth2/:path*"
+      "destination": "https://anjaneya-herbals-api-964046018095.asia-south1.run.app/oauth2/:path*"
     },
     {
       "source": "/login/oauth2/:path*",
-      "destination": "http://129.225.88.110:8888/login/oauth2/:path*"
+      "destination": "https://anjaneya-herbals-api-964046018095.asia-south1.run.app/login/oauth2/:path*"
     },
     {
       "source": "/(.*)",
