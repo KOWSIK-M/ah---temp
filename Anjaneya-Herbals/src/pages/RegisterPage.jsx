@@ -199,11 +199,11 @@ const RegisterPage = () => {
                             />
                             <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
                                 I agree to the{' '}
-                                <Link to="/terms" className="text-brand-terracotta hover:text-brand-earth">
+                                <Link to="/information/terms" className="text-brand-terracotta hover:text-brand-earth">
                                     Terms of Service
                                 </Link>{' '}
                                 and{' '}
-                                <Link to="/privacy" className="text-brand-terracotta hover:text-brand-earth">
+                                <Link to="/information/privacy" className="text-brand-terracotta hover:text-brand-earth">
                                     Privacy Policy
                                 </Link>
                             </label>

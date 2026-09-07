@@ -81,6 +81,12 @@ function App() {
                     <Route path="/forgot-password" element={<PasswordRecoveryPage />} />
                     <Route path="/reset-password" element={<PasswordRecoveryPage />} />
                     <Route path="/information/:page" element={<InformationPage />} />
+                    {/* Keep common policy URLs and old bookmarks out of the 404 page. */}
+                    <Route path="/terms" element={<Navigate to="/information/terms" replace />} />
+                    <Route path="/privacy" element={<Navigate to="/information/privacy" replace />} />
+                    <Route path="/shipping" element={<Navigate to="/information/shipping" replace />} />
+                    <Route path="/refunds" element={<Navigate to="/information/refunds" replace />} />
+                    <Route path="/faq" element={<Navigate to="/information/faq" replace />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 

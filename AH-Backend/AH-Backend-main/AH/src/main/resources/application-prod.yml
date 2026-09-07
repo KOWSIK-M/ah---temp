@@ -12,6 +12,15 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            # Vercel proxies the OAuth callback to Cloud Run. Pin the public
+            # HTTPS URI because the proxy's backend host is otherwise used.
+            redirect-uri: ${GOOGLE_OAUTH2_REDIRECT_URI:https://anjaneya-herbals.vercel.app/login/oauth2/code/google}
+
 cookie:
   secure: ${COOKIE_SECURE:true} # Required for SameSite=None (Cross-site Vercel <-> Render)
 
