@@ -5,8 +5,8 @@
       "destination": "https://anjaneya-herbals-api-964046018095.asia-south1.run.app/api/:path*"
     },
     {
-      "source": "/oauth2/:path*",
-      "destination": "https://anjaneya-herbals-api-964046018095.asia-south1.run.app/oauth2/:path*"
+      "source": "/oauth2/authorization/:path*",
+      "destination": "https://anjaneya-herbals-api-964046018095.asia-south1.run.app/oauth2/authorization/:path*"
     },
     {
       "source": "/login/oauth2/:path*",
