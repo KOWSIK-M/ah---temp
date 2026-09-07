@@ -53,19 +53,25 @@ public class CouponService {
      */
     @Transactional
     public BigDecimal applyToOrder(String code, BigDecimal orderAmount) {
-        Coupon coupon = couponRepository.findByCodeIgnoreCaseAndActiveTrue(code)
+        Coupon coupon = couponRepository.lockByCode(code.trim())
                 .orElseThrow(() -> new BadRequestException("Coupon '" + code + "' is no longer valid"));
 
+        if (!Boolean.TRUE.equals(coupon.getActive()) || (coupon.getExpiresAt()!=null && coupon.getExpiresAt().isBefore(LocalDateTime.now()))
+            || (coupon.getMaxUses()!=null && coupon.getUsedCount()>=coupon.getMaxUses())
+            || (coupon.getMinOrderAmount()!=null && orderAmount.compareTo(coupon.getMinOrderAmount())<0))
+            throw new BadRequestException("Coupon is no longer valid for this order");
         BigDecimal discount = calculateDiscount(coupon, orderAmount);
 
         coupon.setUsedCount(coupon.getUsedCount() + 1);
-        // Auto-deactivate when max uses reached
-        if (coupon.getMaxUses() != null && coupon.getUsedCount() >= coupon.getMaxUses()) {
-            coupon.setActive(false);
-        }
         couponRepository.save(coupon);
 
         return discount;
+    }
+
+    @Transactional
+    public void releaseReservation(String code) {
+        if(code==null) return;
+        couponRepository.lockByCode(code).ifPresent(c->{c.setUsedCount(Math.max(0,c.getUsedCount()-1));couponRepository.save(c);});
     }
 
     // ──────────────────────────────────────────────

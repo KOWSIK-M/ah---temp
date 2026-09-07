@@ -25,6 +25,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final EndpointLimit[] LIMITS = {
         new EndpointLimit("/api/auth/login",    5),
+        new EndpointLimit("/api/auth/forgot-password", 3),
+        new EndpointLimit("/api/auth/reset-password", 5),
+        new EndpointLimit("/api/newsletter", 3),
         new EndpointLimit("/api/auth/register", 3),
         new EndpointLimit("/api/chat",          20), // 20 AI chat messages/min per IP
     };

@@ -9,6 +9,14 @@ import java.util.stream.Collectors;
 
 public class OrderResponse {
     
+    private BigDecimal codCharges;
+    private String gatewayOrderId;
+    private String returnReason;
+    private LocalDateTime returnRequestedAt;
+    public BigDecimal getCodCharges() { return codCharges; }
+    public String getGatewayOrderId() { return gatewayOrderId; }
+    public String getReturnReason() { return returnReason; }
+    public LocalDateTime getReturnRequestedAt() { return returnRequestedAt; }
     private Long id;
     private List<OrderItemResponse> items;
     private String shippingAddressSnapshot;
@@ -139,6 +147,10 @@ public class OrderResponse {
         
         OrderResponse response = new OrderResponse();
         response.setId(order.getId());
+        response.codCharges = order.getCodCharges();
+        response.gatewayOrderId = order.getGatewayOrderId();
+        response.returnReason = order.getReturnReason();
+        response.returnRequestedAt = order.getReturnRequestedAt();
         response.setItems(itemResponses);
         response.setShippingAddressSnapshot(order.getShippingAddressSnapshot());
         response.setStatus(order.getStatus());

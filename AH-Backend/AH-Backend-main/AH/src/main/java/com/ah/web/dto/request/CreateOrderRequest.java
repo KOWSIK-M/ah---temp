@@ -8,6 +8,9 @@ public class CreateOrderRequest {
     private Long shippingAddressId;
     
     private String paymentMethod;
+    private java.math.BigDecimal expectedTotal;
+    public java.math.BigDecimal getExpectedTotal() { return expectedTotal; }
+    public void setExpectedTotal(java.math.BigDecimal value) { expectedTotal=value; }
 
     /** Optional — validated server-side; invalid code causes order rejection. */
     private String couponCode;

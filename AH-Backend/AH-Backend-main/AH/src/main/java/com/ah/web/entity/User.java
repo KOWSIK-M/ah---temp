@@ -14,6 +14,11 @@ import java.util.List;
 @Table(name = "users")
 public class User {
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(nullable=false)
+    private int authVersion;
+    public int getAuthVersion() { return authVersion; }
+    public void setAuthVersion(int value) { authVersion=value; }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -55,7 +55,7 @@ const loadRazorpayScript = () =>
 
 const CheckoutPage = () => {
   const [step, setStep] = useState(1);
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, refreshCart } = useCart();
   const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -70,7 +70,20 @@ const CheckoutPage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const items = location.state?.cartItems || cartItems || [];
+  const items = cartItems || [];
+  const [quote, setQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState('');
+  const [pendingOrderId, setPendingOrderId] = useState(null);
+  const couponCode = location.state?.couponCode || null;
+  useEffect(() => {
+    let active = true;
+    setQuote(null);
+    if (!items.length || pendingOrderId || orderComplete) return;
+    ordersApi.quote({ couponCode, paymentMethod: paymentMethod === 'cod' ? 'COD' : 'RAZORPAY' })
+      .then(data => { if (active) { setQuote(data); setQuoteError(''); } })
+      .catch(error => { if (active) setQuoteError(error.message); });
+    return () => { active = false; };
+  }, [cartItems, couponCode, paymentMethod, pendingOrderId, orderComplete]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -117,20 +130,8 @@ const CheckoutPage = () => {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  const calculateSubtotal = () => {
-    return items.reduce((sum, item) => {
-      const price = item.productPrice || item.price || 0;
-      return sum + price * item.quantity;
-    }, 0);
-  };
-
-  const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    const discount = location.state?.discount || 0;
-    const delivery = subtotal > 999 ? 0 : 49;
-    const codCharge = paymentMethod === "cod" ? 29 : 0;
-    return subtotal - discount + delivery + codCharge;
-  };
+  const calculateSubtotal = () => Number(quote?.subtotal ?? items.reduce((sum, item) => sum + Number(item.productPrice ?? item.price ?? 0) * item.quantity, 0));
+  const calculateTotal = () => Number(quote?.totalAmount ?? 0);
 
   const validateAddressForm = () => {
     const required = [
@@ -215,6 +216,10 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (!quote && !pendingOrderId) {
+      showToastMessage(quoteError || 'Please wait for the server to confirm your total.');
+      return;
+    }
     // ── Cash on Delivery ────────────────────────────────────────────
     if (paymentMethod === "cod") {
       setLoading(true);
@@ -223,9 +228,10 @@ const CheckoutPage = () => {
         const orderData = await ordersApi.create({
           shippingAddressId: selectedAddress.id,
           paymentMethod: "cod",
+          expectedTotal: quote?.totalAmount,
           ...(couponCode ? { couponCode } : {}),
         });
-        await clearCart();
+        await refreshCart();
         setOrderDetails(orderData);
         setOrderComplete(true);
         setStep(3);
@@ -247,9 +253,11 @@ const CheckoutPage = () => {
     }
 
     try {
-      const amountInPaise = Math.round(calculateTotal() * 100);
-      const rzpOrderData  = await paymentApi.createRazorpayOrder(amountInPaise);
-      setLoading(false); // stop spinner before Razorpay popup opens
+      const rzpOrderData = await paymentApi.createRazorpayOrder(pendingOrderId ? { orderId: pendingOrderId } : {
+        shippingAddressId: selectedAddress.id, couponCode: location.state?.couponCode || null, expectedTotal: quote?.totalAmount,
+      });
+      setPendingOrderId(rzpOrderData.orderId);
+      // Keep submission disabled while the payment window is open.
 
       const couponCode = location.state?.couponCode || null;
 
@@ -266,7 +274,10 @@ const CheckoutPage = () => {
           contact: selectedAddress.phone ?? "",
         },
         theme:   { color: "#10b981" },
-        modal:   { ondismiss: () => showToastMessage("Payment cancelled") },
+        modal: { ondismiss: async () => {
+          await refreshCart();
+          navigate('/orders');
+        } },
 
         handler: async (response) => {
           setLoading(true);
@@ -278,7 +289,7 @@ const CheckoutPage = () => {
               shippingAddressId: selectedAddress.id,
               ...(couponCode ? { couponCode } : {}),
             });
-            await clearCart();
+            await refreshCart();
             setOrderDetails(orderData);
             setOrderComplete(true);
             setStep(3);
@@ -1299,7 +1310,7 @@ const CheckoutPage = () => {
                     <span>Subtotal</span>
                     <span>₹{calculateSubtotal().toLocaleString()}</span>
                   </div>
-                  {location.state?.discount > 0 && (
+                  {quote?.discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount</span>
                       <span>-₹{location.state.discount.toLocaleString()}</span>
@@ -1307,12 +1318,12 @@ const CheckoutPage = () => {
                   )}
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
-                    <span>{calculateSubtotal() > 999 ? "FREE" : "₹49"}</span>
+                    <span>{Number(quote?.shippingCharges ?? 0) === 0 ? "FREE" : `₹${quote.shippingCharges}`}</span>
                   </div>
                   {paymentMethod === "cod" && (
                     <div className="flex justify-between text-gray-600">
                       <span>COD Charges</span>
-                      <span>₹29</span>
+                      <span>₹{quote?.codCharges ?? 29}</span>
                     </div>
                   )}
                   <div className="border-t pt-2 flex justify-between font-bold text-lg">

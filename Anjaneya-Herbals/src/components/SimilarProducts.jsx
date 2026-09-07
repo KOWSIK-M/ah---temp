@@ -1,3 +1,4 @@
+import { productsApi } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,31 +10,11 @@ const SimilarProducts = ({ productId, category }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockProducts = [
-      {
-        id: 101,
-        name: 'Premium Ashwagandha Capsules',
-        price: 599,
-        originalPrice: 799,
-        rating: 4.5,
-        reviewCount: 234,
-        image: 'https://images.unsplash.com/photo-1596040033221-a9881e4f6f5d?w=400',
-        discount: 25
-      },
-      {
-        id: 102,
-        name: 'Organic Turmeric Powder',
-        price: 299,
-        originalPrice: 399,
-        rating: 4.7,
-        reviewCount: 189,
-        image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w-400',
-        discount: 20
-      },
-      // Add more products...
-    ];
-    setProducts(mockProducts);
+    let active=true;
+    productsApi.getById(productId).then(product=>productsApi.getAll({categoryId:product.categoryId,size:8}))
+      .then(data=>{if(active)setProducts((data.content||[]).filter(p=>String(p.id)!==String(productId)).map(p=>({...p,image:p.imageUrl,originalPrice:p.oldPrice||p.price,discount:p.oldPrice>p.price?Math.round(100*(1-p.price/p.oldPrice)):0})));})
+      .catch(()=>{if(active)setProducts([]);});
+    return ()=>{active=false;};
   }, [productId, category]);
 
   const scrollLeft = () => {

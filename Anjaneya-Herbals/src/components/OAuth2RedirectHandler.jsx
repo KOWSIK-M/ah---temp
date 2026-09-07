@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { userApi } from "../services/api";
+import { API_BASE_URL, userApi } from "../services/api";
 
 const OAuth2RedirectHandler = () => {
   const navigate = useNavigate();
@@ -18,11 +18,7 @@ const OAuth2RedirectHandler = () => {
       return;
     }
 
-    const apiBase =
-      import.meta.env.VITE_API_URL ||
-      (window?.location?.hostname === "localhost"
-        ? "http://localhost:8888/api"
-        : "/api");
+    const apiBase = API_BASE_URL;
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

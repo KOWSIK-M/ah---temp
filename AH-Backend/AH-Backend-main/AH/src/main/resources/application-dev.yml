@@ -23,4 +23,8 @@ logging:
 
 # Expose full exception details in API error responses (dev only)
 app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
   show-error-details: true
+
+cookie:
+  secure: ${COOKIE_SECURE:false}

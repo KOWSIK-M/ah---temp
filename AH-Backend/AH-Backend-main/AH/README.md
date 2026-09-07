@@ -6,7 +6,7 @@ Spring Boot backend for the Anjaneya Herbals Ayurvedic e-commerce store.
 
 - **Framework**: Spring Boot 3.4.1
 - **Java**: 21
-- **Database**: PostgreSQL (prod) / H2 (dev)
+- **Database**: PostgreSQL with pgvector (local, development, and production)
 - **Security**: JWT Authentication
 - **Build**: Maven
 
@@ -16,23 +16,57 @@ Spring Boot backend for the Anjaneya Herbals Ayurvedic e-commerce store.
 - Java 21+
 - Maven 3.9+ (or use included wrapper)
 
-### Development Mode
+### Backend development
 
 ```bash
 cd AH
 ./mvnw spring-boot:run
 ```
 
-App runs on `http://localhost:8080` with H2 in-memory database.
-
-**H2 Console**: `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:anjaneyadb`
-- Username: `sa`
-- Password: (empty)
+App runs on `http://localhost:8888` by default. The local environment uses the
+PostgreSQL container described below; it does not use an H2 console.
 
 ### Default Admin Account
 - Email: `admin@anjaneyaherbals.com`
 - Password: `Admin@123`
+
+## Environments
+
+The backend has four intentional environments:
+
+| Profile | Use | AI provider |
+|---|---|---|
+| `local` (default) | Developer machine | Local Ollama: `llama3.2` and `mxbai-embed-large` |
+| `dev` | Shared development service | Configurable hosted services |
+| `test` | Automated tests | Mocked AI and in-memory database |
+| `prod` | Deployed service | Environment-provided hosted services |
+
+### Run locally with local AI
+
+1. Copy `.env.example` to `.env` and set a non-placeholder `JWT_SECRET`.
+2. Start the local database and Ollama services:
+
+   ```bash
+   docker compose -f compose.local.yml up -d
+   docker compose -f compose.local.yml exec ollama ollama pull llama3.2
+   docker compose -f compose.local.yml exec ollama ollama pull mxbai-embed-large
+   ```
+
+3. Start the Spring backend with `mvn spring-boot:run`.
+4. In `Anjaneya-Herbals`, copy `.env.example` to `.env.local` and run `npm run dev`.
+
+The local frontend calls `http://localhost:8888/api`; the backend uses the local
+PostgreSQL and Ollama containers. After the first product import, use the admin
+embedding re-index endpoint to build the local catalog vector index.
+
+### Deploy
+
+Set `SPRING_PROFILES_ACTIVE=prod` for the backend and provide all production
+secrets through the deployment platform. Set `APP_FRONTEND_URL`,
+`APP_OAUTH2_REDIRECT_URI`, and `CORS_ORIGINS` to the exact frontend origin.
+For the frontend, set `VITE_API_URL` during the production build to the public
+backend API URL, including `/api`. Vite exposes this value at build time, so it
+must be present whenever a deployment is rebuilt.
 
 ## API Endpoints
 
@@ -79,7 +113,36 @@ DATABASE_USERNAME=user
 DATABASE_PASSWORD=password
 JWT_SECRET=your-base64-encoded-256bit-secret
 CORS_ORIGINS=https://yourdomain.com
+APP_FRONTEND_URL=https://yourdomain.com
+RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_WEBHOOK_SECRET=...
 ```
+
+For Razorpay, configure the `payment.captured` and `refund.processed` webhooks
+to `https://your-api-domain/api/payment/razorpay/webhook`. The webhook secret
+must be set as `RAZORPAY_WEBHOOK_SECRET`. Orders are created from the server's
+cart and price calculation; the browser never supplies the payment amount.
+
+## Checkout, returns, and account recovery
+
+- The server calculates delivery, cash-on-delivery, discount, and final totals.
+- Online payments are confirmed only after Razorpay signature and payment-record
+  verification. Pending online checkouts expire after 30 minutes and restore
+  reserved stock.
+- Customers can cancel eligible orders and submit a return request. Razorpay
+  refunds are reconciled through the payment gateway and its webhook.
+- Password-reset links are single-use, stored as hashes, expire after 30 minutes,
+  and revoke active refresh-token sessions after a password change.
+
+## Product assistant knowledge boundaries
+
+The Vaidya assistant can use only current catalog records plus the reviewed,
+versioned material in `src/main/resources/knowledge/approved.json`. It rejects
+unsafe, medical-treatment, prompt-injection, and unrelated requests before
+retrieval. It returns approved source passages and catalog cards; it does not
+render open-ended model advice. After changing catalog content or approved
+knowledge, use the admin embedding re-index endpoint.
 
 ### Docker
 

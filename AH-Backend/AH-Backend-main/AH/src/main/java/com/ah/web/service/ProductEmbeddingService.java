@@ -31,11 +31,16 @@ public class ProductEmbeddingService {
     private static final Logger log = LoggerFactory.getLogger(ProductEmbeddingService.class);
 
     private final VectorStore vectorStore;
+    private final ApprovedKnowledge knowledge;
+    private final org.springframework.context.ApplicationEventPublisher events;
+    public record IndexEvent(Long id, boolean deleted) {}
     private final ProductRepository productRepository;
 
     @Autowired
-    public ProductEmbeddingService(VectorStore vectorStore, ProductRepository productRepository) {
+    public ProductEmbeddingService(VectorStore vectorStore, ProductRepository productRepository, ApprovedKnowledge knowledge, org.springframework.context.ApplicationEventPublisher events) {
         this.vectorStore = vectorStore;
+        this.knowledge = knowledge;
+        this.events = events;
         this.productRepository = productRepository;
     }
 
@@ -43,27 +48,16 @@ public class ProductEmbeddingService {
     // Public API
     // -----------------------------------------------------------------------
 
-    /** Called after a product is created or updated. */
+    public void indexProduct(Product product) { events.publishEvent(new IndexEvent(product.getId(),false)); }
+    public void removeProduct(Long productId) { events.publishEvent(new IndexEvent(productId,true)); }
     @Async
-    public void indexProduct(Product product) {
+    @org.springframework.transaction.event.TransactionalEventListener(phase=org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT,fallbackExecution=true)
+    @org.springframework.transaction.annotation.Transactional(propagation=org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,readOnly=true)
+    public void onIndexEvent(IndexEvent event) {
         try {
-            // Remove stale entry first (pgvector upsert requires delete + add)
-            removeProduct(product.getId());
-            vectorStore.add(List.of(toDocument(product)));
-            log.debug("Indexed product id={} name={}", product.getId(), product.getName());
-        } catch (Exception e) {
-            log.error("Failed to index product id={}: {}", product.getId(), e.getMessage());
-        }
-    }
-
-    /** Called before a product is deleted. */
-    @Async
-    public void removeProduct(Long productId) {
-        try {
-            vectorStore.delete(List.of(documentId(productId)));
-        } catch (Exception e) {
-            log.debug("Remove product id={} (may not exist yet): {}", productId, e.getMessage());
-        }
+            if(event.deleted()) vectorStore.delete(List.of(documentId(event.id())));
+            else productRepository.findById(event.id()).ifPresent(p->vectorStore.add(List.of(toDocument(p))));
+        } catch(Exception e) { log.warn("Catalog index update failed for {}; use admin reindex to retry",event.id()); }
     }
 
     /**
@@ -71,6 +65,7 @@ public class ProductEmbeddingService {
      * Called once on startup (via AdminController endpoint) or whenever the
      * embedding model changes.
      */
+    @org.springframework.transaction.annotation.Transactional(readOnly=true)
     public void reindexAll() {
         log.info("Starting full product re-index...");
         List<Product> products = productRepository.findAll();
@@ -84,7 +79,8 @@ public class ProductEmbeddingService {
             List<Document> batch = docs.subList(i, Math.min(i + batchSize, docs.size()));
             vectorStore.add(batch);
         }
-        log.info("Re-indexed {} products.", docs.size());
+        vectorStore.add(knowledge.documents());
+        log.info("Re-indexed {} products and approved knowledge.", docs.size());
     }
 
     // -----------------------------------------------------------------------
@@ -92,7 +88,7 @@ public class ProductEmbeddingService {
     // -----------------------------------------------------------------------
 
     private static String documentId(Long productId) {
-        return "product-" + productId;
+        return java.util.UUID.nameUUIDFromBytes(("product-" + productId).getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
     }
 
     /**
@@ -126,6 +122,8 @@ public class ProductEmbeddingService {
         }
 
         Map<String, Object> metadata = Map.of(
+            "collection",        "ah-approved-v1",
+            "kind",              "product",
             "productId",         product.getId(),
             "name",              product.getName(),
             "imageUrl",          product.getImageUrl() != null ? product.getImageUrl() : "",

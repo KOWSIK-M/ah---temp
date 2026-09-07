@@ -73,6 +73,7 @@ public class UserResponse {
         // Calculate stats
         long orderCount = user.getOrders() != null ? user.getOrders().size() : 0;
         double totalSpent = user.getOrders() != null ? user.getOrders().stream()
+                .filter(o -> "PAID".equals(o.getPaymentStatus()))
                 .mapToDouble(o -> o.getTotalAmount().doubleValue())
                 .sum() : 0.0;
         
@@ -81,10 +82,10 @@ public class UserResponse {
         response.setAvgOrderValue(orderCount > 0 ? totalSpent / orderCount : 0.0);
         
         if (user.getOrders() != null && !user.getOrders().isEmpty()) {
-            response.setLastOrderDate(user.getOrders().get(user.getOrders().size() - 1).getCreatedAt());
+            response.setLastOrderDate(user.getOrders().stream().map(com.ah.web.entity.Order::getCreatedAt).filter(java.util.Objects::nonNull).max(java.time.LocalDateTime::compareTo).orElse(null));
         }
         
-        response.setStatus("ACTIVE"); // Default for now
+        response.setStatus(response.getLastOrderDate()!=null && response.getLastOrderDate().isAfter(java.time.LocalDateTime.now().minusDays(30)) ? "ACTIVE" : "INACTIVE");
         
         return response;
     }

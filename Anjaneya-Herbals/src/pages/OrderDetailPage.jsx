@@ -289,16 +289,19 @@ Status: ${order.status}
               ))}
             </div>
 
-            {/* Order Summary */}
+            {order.returnRequestedAt && <p className="p-4 bg-green-50">Return request received: {order.returnReason}</p>}
+          {/* Order Summary */}
             <div className="mt-6 pt-4 border-t space-y-2">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>₹{(order.totalAmount || 0).toLocaleString()}</span>
+                <span>₹{order.items.reduce((sum,item)=>sum+Number(item.priceAtPurchase)*item.quantity,0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Delivery</span>
-                <span>FREE</span>
+                <span>₹{Number(order.shippingCharges || 0).toFixed(2)}</span>
               </div>
+              <div className="flex justify-between text-gray-600"><span>COD fee</span><span>₹{Number(order.codCharges || 0).toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Discount</span><span>−₹{Number(order.discountAmount || 0).toFixed(2)}</span></div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total</span>
                 <span className="text-green-600">₹{(order.totalAmount || 0).toLocaleString()}</span>

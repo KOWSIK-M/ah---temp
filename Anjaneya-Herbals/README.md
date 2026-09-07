@@ -1,4 +1,19 @@
 # Anjaneya Herbals
+
+## Environment setup
+
+For local work, copy `.env.example` to `.env.local`. The default points at the
+local Spring API on `http://localhost:8888/api`.
+
+For any deployed frontend, configure `VITE_API_URL` in that host's build
+environment as the public backend API URL, including `/api`. For example:
+
+```bash
+VITE_API_URL=https://api.example.com/api
+```
+
+Use `VITE_API_URL=/api` only when the frontend host has a reverse proxy for
+`/api`. Do not commit a deployment-specific API URL into `.env.production`.
 ### Pure. Authentic. Timeless.
 
 Welcome to the digital home of **Anjaneya Herbals**, where ancient Ayurvedic wisdom meets modern purity. We are dedicated to bringing the finest traditional spices, herbal powders, and wellness solutions to your doorstep.

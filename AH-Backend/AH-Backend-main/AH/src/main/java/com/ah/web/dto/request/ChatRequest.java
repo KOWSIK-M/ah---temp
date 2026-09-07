@@ -11,6 +11,8 @@ public class ChatRequest {
     private String message;
 
     /** Optional conversation history so Claude can maintain context across turns */
+    @Size(max=10)
+    @jakarta.validation.Valid
     private List<ChatTurn> history;
 
     public String getMessage() { return message; }
@@ -18,5 +20,5 @@ public class ChatRequest {
     public List<ChatTurn> getHistory() { return history; }
     public void setHistory(List<ChatTurn> history) { this.history = history; }
 
-    public record ChatTurn(String role, String content) {}
+    public record ChatTurn(@jakarta.validation.constraints.Pattern(regexp="user|assistant") String role, @NotBlank @Size(max=2000) String content) {}
 }

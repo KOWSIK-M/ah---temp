@@ -45,37 +45,42 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<UserResponse> getAllCustomers(String search, String filter, org.springframework.data.domain.Pageable pageable) {
-        org.springframework.data.domain.Page<com.ah.web.entity.User> users;
-        if (search != null && !search.trim().isEmpty()) {
-            users = userRepository.findByRoleAndSearch(com.ah.web.entity.Role.CUSTOMER, search.trim(), pageable);
-        } else {
-            users = userRepository.findByRole(com.ah.web.entity.Role.CUSTOMER, pageable);
-        }
-
-        // Note: filter logic (ACTIVE, HIGH_VALUE, etc.) could be added here if needed.
-        // For now, we'll return the results based on search.
-
-        return users.map(UserResponse::fromEntity);
+        return userRepository.findAll(customerFilter(search,filter),pageable).map(UserResponse::fromEntity);
     }
 
-    public java.util.Map<String, Object> getCustomerStats(String filter) {
-        java.util.Map<String, Object> stats = new java.util.HashMap<>();
-        long total = userRepository.countByRole(com.ah.web.entity.Role.CUSTOMER);
-        
-        java.time.LocalDateTime firstOfMonth = java.time.LocalDateTime.now()
-                .withDayOfMonth(1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-        long newThisMonth = userRepository.countByRoleAndCreatedAtAfter(com.ah.web.entity.Role.CUSTOMER, firstOfMonth);
+    private org.springframework.data.jpa.domain.Specification<User> customerFilter(String search,String filter) {
+        return (root,query,cb)->{
+            var rules=new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            rules.add(cb.equal(root.get("role"),com.ah.web.entity.Role.CUSTOMER));
+            if(search!=null&&!search.isBlank()) {
+                String value="%"+search.trim().toLowerCase(java.util.Locale.ROOT)+"%";
+                rules.add(cb.or(cb.like(cb.lower(root.get("firstName")),value),cb.like(cb.lower(root.get("lastName")),value),cb.like(cb.lower(root.get("email")),value),cb.like(root.get("phone"),value)));
+            }
+            if("NEW_THIS_MONTH".equals(filter)) rules.add(cb.greaterThanOrEqualTo(root.get("createdAt"),java.time.LocalDate.now().withDayOfMonth(1).atStartOfDay()));
+            if("ACTIVE".equals(filter)||"INACTIVE".equals(filter)) {
+                var sub=query.subquery(Long.class); var order=sub.from(com.ah.web.entity.Order.class);
+                sub.select(order.get("id")).where(cb.equal(order.get("user"),root),cb.greaterThanOrEqualTo(order.get("createdAt"),java.time.LocalDateTime.now().minusDays(30)));
+                rules.add("ACTIVE".equals(filter)?cb.exists(sub):cb.not(cb.exists(sub)));
+            }
+            if("HIGH_VALUE".equals(filter)) {
+                var sub=query.subquery(java.math.BigDecimal.class); var order=sub.from(com.ah.web.entity.Order.class);
+                sub.select(cb.sum(order.<java.math.BigDecimal>get("totalAmount"))).where(cb.equal(order.get("user"),root),cb.equal(order.get("paymentStatus"),"PAID"));
+                rules.add(cb.greaterThanOrEqualTo(sub,new java.math.BigDecimal("5000")));
+            }
+            return cb.and(rules.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+    }
 
-        stats.put("totalCustomers", total);
-        stats.put("activeCustomers", total); // Simplified: count all as active for now
-        stats.put("newThisMonth", newThisMonth);
-        stats.put("avgOrdersPerCustomer", 0.0); // Placeholder
-        stats.put("totalRevenue", 0.0); // Placeholder
-
-        return stats;
+    @Transactional(readOnly=true)
+    public java.util.Map<String,Object> getCustomerStats(String filter) {
+        var customers=userRepository.findAll(customerFilter(null,filter));
+        long total=customers.size();
+        long active=customers.stream().filter(u->u.getOrders().stream().anyMatch(o->o.getCreatedAt().isAfter(java.time.LocalDateTime.now().minusDays(30)))).count();
+        long fresh=customers.stream().filter(u->u.getCreatedAt().isAfter(java.time.LocalDate.now().withDayOfMonth(1).atStartOfDay())).count();
+        long orders=customers.stream().mapToLong(u->u.getOrders().size()).sum();
+        java.math.BigDecimal revenue=customers.stream().flatMap(u->u.getOrders().stream()).filter(o->"PAID".equals(o.getPaymentStatus()))
+            .map(com.ah.web.entity.Order::getTotalAmount).reduce(java.math.BigDecimal.ZERO,java.math.BigDecimal::add);
+        return java.util.Map.of("totalCustomers",total,"activeCustomers",active,"newThisMonth",fresh,
+            "avgOrdersPerCustomer",total==0?0.0:(double)orders/total,"totalRevenue",revenue);
     }
 }

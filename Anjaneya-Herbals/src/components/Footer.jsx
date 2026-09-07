@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { requestJson } from '../services/api';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
-
 const Footer = () => {
+  const [email,setEmail]=useState(''),[status,setStatus]=useState(''),[busy,setBusy]=useState(false);
+  const subscribe=async event=>{event.preventDefault();setBusy(true);try{const data=await requestJson('/newsletter','POST',{email,consent:true});setStatus(data.message);setEmail('');}catch(e){setStatus(e.message);}finally{setBusy(false);}};
   return (
     <footer className="bg-black text-white pt-16 pb-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,11 +17,7 @@ const Footer = () => {
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
               Premium wellness and beauty products crafted with the finest natural ingredients. Embrace the power of nature for a healthier, more radiant you.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-brand-yellow transition-colors"><Facebook size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-brand-yellow transition-colors"><Instagram size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-brand-yellow transition-colors"><Twitter size={20} /></a>
-            </div>
+
           </div>
 
           {/* Column 2: Quick Links */}
@@ -28,9 +26,8 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-gray-400">
               <li><a href="/#about" className="hover:text-brand-yellow transition-colors">About Us</a></li>
               <li><a href="/#products" className="hover:text-brand-yellow transition-colors">Our Ingredients</a></li>
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">Blog</a></li>
               <li><a href="/contact" className="hover:text-brand-yellow transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">Track Order</a></li>
+              <li><a href="/orders" className="hover:text-brand-yellow transition-colors">Track Order</a></li>
             </ul>
           </div>
 
@@ -38,11 +35,11 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-bold mb-6 text-white border-b border-gray-800 pb-2 inline-block">Policies</h4>
             <ul className="space-y-3 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">Shipping Policy</a></li>
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">Refund Policy</a></li>
-              <li><a href="#" className="hover:text-brand-yellow transition-colors">FAQs</a></li>
+              <li><a href="/information/privacy" className="hover:text-brand-yellow transition-colors">Privacy Policy</a></li>
+              <li><a href="/information/terms" className="hover:text-brand-yellow transition-colors">Terms of Service</a></li>
+              <li><a href="/information/shipping" className="hover:text-brand-yellow transition-colors">Shipping Policy</a></li>
+              <li><a href="/information/refunds" className="hover:text-brand-yellow transition-colors">Refund Policy</a></li>
+              <li><a href="/information/faq" className="hover:text-brand-yellow transition-colors">FAQs</a></li>
             </ul>
           </div>
 
@@ -66,16 +63,19 @@ const Footer = () => {
 
             <div>
               <p className="text-xs text-brand-gray mb-2">Subscribe to our newsletter</p>
-              <div className="flex">
+              <form className="flex" onSubmit={subscribe}>
                 <input
                   type="email"
                   placeholder="Your email address"
+                  aria-label="Newsletter email address" required value={email} onChange={e=>setEmail(e.target.value)}
                   className="bg-gray-800 text-white px-4 py-2 rounded-l-md focus:outline-none focus:ring-1 focus:ring-brand-yellow w-full text-sm"
                 />
-                <button className="bg-brand-orange text-white px-4 py-2 rounded-r-md hover:bg-orange-600 transition-colors">
-                  Subscribe
+                <button disabled={busy} type="submit" className="bg-brand-orange text-white px-4 py-2 rounded-r-md hover:bg-orange-600 transition-colors">
+                  {busy?'Saving…':'Subscribe'}
                 </button>
-              </div>
+              </form>
+              <p className="text-xs mt-2">By subscribing, you agree to receive our product updates. Contact us to unsubscribe.</p>
+              {status&&<p role="status" className="text-sm mt-2">{status}</p>}
             </div>
           </div>
         </div>

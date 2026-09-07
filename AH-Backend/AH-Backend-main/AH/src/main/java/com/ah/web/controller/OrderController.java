@@ -30,6 +30,20 @@ public class OrderController {
         return ResponseEntity.ok(orderService.createOrder(user.getId(), request));
     }
 
+    public record ReturnRequest(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=1000) String reason) {}
+    @PostMapping("/{orderId}/cancel")
+    public OrderResponse cancel(@AuthenticationPrincipal User user, @PathVariable Long orderId) {
+        return orderService.cancelOrder(user.getId(), orderId);
+    }
+    @PostMapping("/{orderId}/return")
+    public OrderResponse requestReturn(@AuthenticationPrincipal User user, @PathVariable Long orderId, @Valid @RequestBody ReturnRequest request) {
+        return orderService.requestReturn(user.getId(), orderId, request.reason());
+    }
+    @PostMapping("/quote")
+    public com.ah.web.service.CheckoutPricing.Quote quote(@AuthenticationPrincipal User user, @RequestBody CreateOrderRequest request) {
+        return orderService.quote(user.getId(), request.getCouponCode(), request.getPaymentMethod());
+    }
+
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getUserOrders(
             @AuthenticationPrincipal User user,

@@ -1,0 +1,22 @@
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import WishlistPage from '../pages/WishlistPage';
+import PasswordRecoveryPage from '../pages/PasswordRecoveryPage';
+import TrackOrderPage from '../pages/TrackOrderPage';
+import Footer from '../components/Footer';
+import { wishlistApi, requestJson, ordersApi } from '../services/api';
+const cart=vi.hoisted(()=>({addToCart:vi.fn().mockResolvedValue(undefined)}));
+vi.mock('../contexts/CartContext',()=>({useCart:()=>cart}));
+vi.mock('../services/api',()=>({wishlistApi:{getAll:vi.fn(),add:vi.fn(),remove:vi.fn()},requestJson:vi.fn(),ordersApi:{getById:vi.fn()}}));
+vi.mock('react-hot-toast',()=>({default:{success:vi.fn(),error:vi.fn()}}));
+beforeEach(()=>vi.clearAllMocks());
+describe('customer flows',()=>{
+ it('shows a real empty wishlist without demo products',async()=>{wishlistApi.getAll.mockResolvedValue([]);render(<MemoryRouter><WishlistPage/></MemoryRouter>);expect(await screen.findByText(/No saved products/)).toBeInTheDocument();expect(screen.queryByText(/Ashwagandha/)).not.toBeInTheDocument();});
+ it('adds a saved product through the real cart context',async()=>{wishlistApi.getAll.mockResolvedValue([{id:7,name:'Almonds',price:500,stock:2,imageUrl:'/almonds.jpg'}]);render(<MemoryRouter><WishlistPage/></MemoryRouter>);fireEvent.click(await screen.findByRole('button',{name:'Add to cart'}));await waitFor(()=>expect(cart.addToCart).toHaveBeenCalledWith(7,1,expect.objectContaining({name:'Almonds'})));});
+ it('does not offer add-to-cart for unavailable stock',async()=>{wishlistApi.getAll.mockResolvedValue([{id:7,name:'Almonds',price:500,stock:0}]);render(<MemoryRouter><WishlistPage/></MemoryRouter>);expect(await screen.findByRole('button',{name:'Add to cart'})).toBeDisabled();});
+ it('submits recovery email and displays the server result',async()=>{requestJson.mockResolvedValue({message:'If an account exists, a reset link has been emailed.'});render(<MemoryRouter initialEntries={['/forgot-password']}><PasswordRecoveryPage/></MemoryRouter>);fireEvent.change(screen.getByLabelText('Email address'),{target:{value:'reader@example.com'}});fireEvent.click(screen.getByRole('button',{name:'Send reset link'}));expect(await screen.findByRole('status')).toHaveTextContent('If an account exists');expect(requestJson).toHaveBeenCalledWith('/auth/forgot-password','POST',{email:'reader@example.com'});});
+ it('reads tracking status from the order API',async()=>{ordersApi.getById.mockResolvedValue({id:12,status:'SHIPPED',paymentStatus:'PAID',updatedAt:'2026-09-07T10:00:00',shippingAddressSnapshot:'Test address'});render(<MemoryRouter initialEntries={['/track-order/12']}><Routes><Route path='/track-order/:orderId' element={<TrackOrderPage/>}/></Routes></MemoryRouter>);expect(await screen.findByText('SHIPPED')).toBeInTheDocument();expect(ordersApi.getById).toHaveBeenCalledWith('12');expect(screen.getByText(/live courier location is not available/)).toBeInTheDocument();});
+ it('newsletter only reports success after server persistence',async()=>{requestJson.mockRejectedValue(new Error('Service unavailable'));render(<Footer/>);fireEvent.change(screen.getByLabelText('Newsletter email address'),{target:{value:'reader@example.com'}});fireEvent.click(screen.getByRole('button',{name:'Subscribe'}));expect(await screen.findByRole('status')).toHaveTextContent('Service unavailable');expect(requestJson).toHaveBeenCalledWith('/newsletter','POST',{email:'reader@example.com',consent:true});});
+});

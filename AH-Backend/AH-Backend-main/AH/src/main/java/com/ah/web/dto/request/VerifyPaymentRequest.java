@@ -7,7 +7,7 @@ public class VerifyPaymentRequest {
     @NotBlank private String razorpayOrderId;
     @NotBlank private String razorpayPaymentId;
     @NotBlank private String razorpaySignature;
-    @NotNull  private Long   shippingAddressId;
+    private Long   shippingAddressId;
     private String couponCode;
 
     public VerifyPaymentRequest() {}

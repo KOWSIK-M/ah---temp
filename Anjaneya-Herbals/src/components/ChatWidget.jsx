@@ -11,15 +11,15 @@ import {
 const WELCOME_MESSAGE = {
   id: 'welcome',
   role: 'assistant',
-  content: "Namaste! I'm **Vaidya**, your Ayurvedic wellness guide at Anjaneya Herbals.\n\nAsk me anything — which herb helps with digestion, what benefits Ashwagandha has, or what to use for hair care. I'll suggest the right products for you.",
+  content: "Namaste! I'm **Vaidya**, your catalog and general wellness information assistant. Ask about our products, Ayurveda, herbs, nuts or dried fruits. I use reviewed sources and catalog facts. I cannot diagnose, prescribe, suggest doses or help with harmful requests. Please do not share personal medical information.",
   suggestions: [],
 };
 
 const SUGGESTED_QUESTIONS = [
-  'What helps with hair fall?',
-  'Best product for immunity boost',
-  'Natural remedy for digestion',
-  'Difference between Brahmi and Ashwagandha',
+  'What is Ayurveda?',
+  'Show me almonds',
+  'What should I check on dried fruit labels?',
+  'Are natural herbal products always safe?',
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

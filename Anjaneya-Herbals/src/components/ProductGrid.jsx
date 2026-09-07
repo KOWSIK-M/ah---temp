@@ -2,54 +2,6 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { productsApi, categoriesApi } from '../services/api';
 
-// Fallback mock data for when API is not available
-const FALLBACK_PRODUCTS = [
-    {
-        id: 1,
-        name: "Kumkumadi Tailam Miraculous Beauty Fluid",
-        price: 899,
-        oldPrice: 1299,
-        imageUrl: "https://images.unsplash.com/photo-1608248597279-f99d160bfcb8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 5,
-        reviewCount: 124,
-        onSale: true,
-        categoryId: 4
-    },
-    {
-        id: 2,
-        name: "Vitamin C Brightening Face Serum",
-        price: 599,
-        oldPrice: 799,
-        imageUrl: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4,
-        reviewCount: 89,
-        onSale: true,
-        categoryId: 4
-    },
-    {
-        id: 3,
-        name: "Organic Aloe Vera Gel for Skin & Hair",
-        price: 299,
-        oldPrice: 399,
-        imageUrl: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 5,
-        reviewCount: 450,
-        onSale: false,
-        categoryId: 5
-    },
-    {
-        id: 4,
-        name: "Rose Water Facial Mist Spray",
-        price: 349,
-        oldPrice: 499,
-        imageUrl: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4,
-        reviewCount: 67,
-        onSale: true,
-        categoryId: 4
-    }
-];
-
 const ProductGrid = ({ title = "Best Sellers", categoryId }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -95,11 +47,7 @@ const ProductGrid = ({ title = "Best Sellers", categoryId }) => {
             } catch (err) {
                 console.error('Error fetching products:', err);
                 setError(err.message);
-                // Use fallback products
-                const filtered = categoryId 
-                    ? FALLBACK_PRODUCTS.filter(p => p.categoryId === parseInt(categoryId))
-                    : FALLBACK_PRODUCTS;
-                setProducts(filtered.length > 0 ? filtered : FALLBACK_PRODUCTS);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }

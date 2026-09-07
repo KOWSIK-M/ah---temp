@@ -9,11 +9,11 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
 
 cookie:
-  secure: true # Required for SameSite=None (Cross-site Vercel <-> Render)
+  secure: ${COOKIE_SECURE:true} # Required for SameSite=None (Cross-site Vercel <-> Render)
 
 # Security - Override in environment
 jwt:
@@ -29,5 +29,6 @@ logging:
     org.springframework.security: WARN
 
 app:
+  frontend-url: ${APP_FRONTEND_URL}
   oauth2:
     redirect-uri: ${APP_OAUTH2_REDIRECT_URI:https://anjaneya-herbals.vercel.app/oauth2/redirect}

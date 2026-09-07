@@ -41,6 +41,7 @@ public class JwtService {
                 .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
                 .claim("type", "access")
+                .claim("authVersion", user.getAuthVersion())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -108,6 +109,12 @@ public class JwtService {
         }
     }
 
+    public boolean matchesUser(String token, User user) {
+        try {
+            Integer version=Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("authVersion", Integer.class);
+            return (version == null ? 0 : version) == user.getAuthVersion();
+        } catch (Exception e) { return false; }
+    }
     public long getRefreshTokenExpiration() {
         return refreshTokenExpiration;
     }

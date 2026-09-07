@@ -8,6 +8,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="app.legacy-schema-runner",havingValue="true")
 public class SchemaMigrationRunner implements ApplicationRunner {
 
     @PersistenceContext

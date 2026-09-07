@@ -4,7 +4,7 @@
 // origin and later sent with `credentials: 'include'` requests.
 // Use VITE_API_URL in env to override (recommended). Otherwise fall back
 // to the Vite proxy `/api` for setups that rely on it.
-const API_BASE_URL =
+export const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window?.location?.hostname === "localhost"
     ? "http://localhost:8888/api"
@@ -57,7 +57,7 @@ const apiFetch = async (endpoint, options = {}) => {
     } else {
       localStorage.removeItem("user");
       window.dispatchEvent(new Event("sessionExpired"));
-      return { ok: false, sessionExpired: true };
+      throw new Error("Your session expired. Please sign in again.");
     }
   }
 
@@ -590,10 +590,10 @@ export const paymentApi = {
    * @param {number} amountInPaise - amount in paise (₹1 = 100 paise)
    * @returns {{ razorpayOrderId, amount, currency, keyId }}
    */
-  createRazorpayOrder: async (amountInPaise) => {
+  createRazorpayOrder: async (payload) => {
     const response = await apiFetch("/payment/razorpay/create-order", {
       method: "POST",
-      body: JSON.stringify({ amountInPaise }),
+      body: JSON.stringify(payload),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok)
@@ -629,7 +629,7 @@ export const chatApi = {
   sendMessage: async (message, history = []) => {
     const response = await apiFetch("/chat", {
       method: "POST",
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history: history.slice(-10).map(t => ({ role: t.role, content: t.content.slice(0, 2000) })) }),
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
@@ -666,3 +666,20 @@ export default {
   reviews: reviewsApi,
   coupons: couponApi,
 };
+
+export const requestJson = async (path, method = 'GET', body) => {
+  const response = await apiFetch(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  const text = await response.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch { throw new Error('Unexpected server response'); }
+  if (!response.ok) throw new Error(data?.message || 'Request failed. Please try again.');
+  return data;
+};
+export const wishlistApi = {
+  getAll: () => requestJson('/wishlist'),
+  add: id => requestJson(`/wishlist/${id}`, 'PUT'),
+  remove: id => requestJson(`/wishlist/${id}`, 'DELETE'),
+};
+ordersApi.quote = data => requestJson('/orders/quote', 'POST', data);
+ordersApi.cancel = id => requestJson(`/orders/${id}/cancel`, 'POST');
+ordersApi.requestReturn = (id, reason) => requestJson(`/orders/${id}/return`, 'POST', { reason });

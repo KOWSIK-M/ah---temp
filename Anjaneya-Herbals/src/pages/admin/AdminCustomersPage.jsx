@@ -474,7 +474,7 @@ const AdminCustomersPage = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-xs lg:text-sm font-medium text-gray-600">Avg Customer Value</p>
-                            <p className="text-lg lg:text-2xl font-bold text-gray-900 mt-1">{formatCurrency(stats.avgOrdersPerCustomer)}</p>
+                            <p className="text-lg lg:text-2xl font-bold text-gray-900 mt-1">{Number(stats.avgOrdersPerCustomer).toFixed(1)}</p>
                         </div>
                         <div className="w-8 h-8 lg:w-12 lg:h-12 bg-yellow-100 rounded-lg lg:rounded-xl flex items-center justify-center">
                             <IndianRupee size={16} className="lg:w-6 lg:h-6 text-yellow-600" />

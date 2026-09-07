@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS wishlist_items(user_id BIGINT NOT NULL REFERENCES users(id),product_id BIGINT NOT NULL REFERENCES products(id),PRIMARY KEY(user_id,product_id));
+CREATE TABLE IF NOT EXISTS password_reset_tokens(token_hash VARCHAR(64) PRIMARY KEY,user_id BIGINT NOT NULL REFERENCES users(id),expires_at TIMESTAMP NOT NULL);
+CREATE TABLE IF NOT EXISTS newsletter_subscriptions(email VARCHAR(254) PRIMARY KEY,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);

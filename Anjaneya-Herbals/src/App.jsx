@@ -8,6 +8,8 @@ import { CartProvider } from './contexts/CartContext';
 
 // Pages
 import HomePage from './pages/HomePage';
+import PasswordRecoveryPage from './pages/PasswordRecoveryPage';
+import InformationPage from './pages/InformationPage';
 import StoresPage from './pages/StoresPage';
 import ContactPage from './pages/ContactPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
@@ -76,6 +78,9 @@ function App() {
                     <Route path="/category/:categoryId" element={<AllProductsPage />} />
                     <Route path="/products" element={<AllProductsPage />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/forgot-password" element={<PasswordRecoveryPage />} />
+                    <Route path="/reset-password" element={<PasswordRecoveryPage />} />
+                    <Route path="/information/:page" element={<InformationPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 

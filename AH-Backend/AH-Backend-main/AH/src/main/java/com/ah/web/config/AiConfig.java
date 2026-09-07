@@ -10,22 +10,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Manually wires two separate OpenAI-compatible API clients:
- *
- *   Chat model  → Groq  (https://api.groq.com/openai)   FREE key from console.groq.com
- *   Embeddings  → Jina  (https://api.jina.ai/v1)        FREE key from jina.ai
+ * Manually wires the embedding client for the selected environment. Both Jina
+ * and Ollama expose OpenAI-compatible embedding endpoints.
  *
  * Spring AI's auto-configured OpenAiChatModel (from application.yml) handles the
  * ChatClient/ChatModel bean pointing to Groq. This class overrides only the
  * EmbeddingModel bean to point to Jina instead, avoiding any ONNX downloads.
  *
- * Dimensions: jina-embeddings-v3 outputs 1024-dimensional vectors.
+ * The selected embedding model must output 1024 dimensions, matching pgvector.
  */
 @Configuration
+@org.springframework.context.annotation.Profile("!test")
 public class AiConfig {
 
-    @Value("${jina.api-key:}")
-    private String jinaApiKey;
+    @Value("${ai.embedding.api-key:}")
+    private String embeddingApiKey;
+
+    @Value("${ai.embedding.base-url}")
+    private String embeddingBaseUrl;
+
+    @Value("${ai.embedding.model}")
+    private String embeddingModel;
 
     /**
      * EmbeddingModel backed by Jina AI's OpenAI-compatible endpoint.
@@ -35,19 +40,16 @@ public class AiConfig {
     @Bean
     @Primary
     public OpenAiEmbeddingModel jinaEmbeddingModel() {
-        // Spring AI 1.0.0 requires the builder — no 2-arg constructor exists
-        // Base URL must NOT include /v1 — Spring AI appends /v1/embeddings itself.
-        // Setting it to https://api.jina.ai/v1 produces the broken double-path
-        // https://api.jina.ai/v1/v1/embeddings
-        OpenAiApi jinaApi = OpenAiApi.builder()
-                .baseUrl("https://api.jina.ai")
-                .apiKey(jinaApiKey)
+        // The base URL intentionally omits /v1 because Spring AI appends it.
+        OpenAiApi embeddingApi = OpenAiApi.builder()
+                .baseUrl(embeddingBaseUrl)
+                .apiKey(embeddingApiKey)
                 .build();
 
         OpenAiEmbeddingOptions options = OpenAiEmbeddingOptions.builder()
-                .model("jina-embeddings-v3")
+                .model(embeddingModel)
                 .build();
 
-        return new OpenAiEmbeddingModel(jinaApi, MetadataMode.EMBED, options);
+        return new OpenAiEmbeddingModel(embeddingApi, MetadataMode.EMBED, options);
     }
 }

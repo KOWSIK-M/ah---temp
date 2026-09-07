@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
+import { API_BASE_URL } from "../services/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    const API_URL = import.meta.env.VITE_API_URL || "/api";
+    const API_URL = API_BASE_URL;
     // Remove '/api' suffix to get the root base URL (e.g. https://backend.com/api -> https://backend.com)
     // If API_URL is '/api' (local proxy), baseUrl becomes '' which works with relative paths
     const baseUrl = API_URL.endsWith("/api") ? API_URL.slice(0, -4) : API_URL;

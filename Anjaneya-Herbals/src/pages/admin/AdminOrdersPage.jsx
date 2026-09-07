@@ -358,6 +358,7 @@ const AdminOrdersPage = () => {
                 </div>
                 
                 <div className="p-6 overflow-y-auto max-h-[70vh]">
+                    {selectedOrder?.returnRequestedAt && <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6"><strong>Return requested</strong><p>{selectedOrder.returnReason}</p><p>{formatDate(selectedOrder.returnRequestedAt)}</p></div>}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div className="bg-white p-4 rounded-xl border border-gray-200">
                             <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">

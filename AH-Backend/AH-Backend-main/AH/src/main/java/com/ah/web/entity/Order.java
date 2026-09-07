@@ -54,6 +54,22 @@ public class Order {
     @Column(precision = 10, scale = 2)
     private BigDecimal taxAmount;
 
+    @Column(unique = true)
+    private String gatewayOrderId;
+    private BigDecimal codCharges;
+    private String returnReason;
+    private LocalDateTime returnRequestedAt;
+    private boolean stockRestored;
+    public String getGatewayOrderId() { return gatewayOrderId; }
+    public void setGatewayOrderId(String value) { gatewayOrderId = value; }
+    public BigDecimal getCodCharges() { return codCharges; }
+    public void setCodCharges(BigDecimal value) { codCharges = value; }
+    public String getReturnReason() { return returnReason; }
+    public void setReturnReason(String value) { returnReason = value; }
+    public LocalDateTime getReturnRequestedAt() { return returnRequestedAt; }
+    public void setReturnRequestedAt(LocalDateTime value) { returnRequestedAt = value; }
+    public boolean isStockRestored() { return stockRestored; }
+    public void setStockRestored(boolean value) { stockRestored = value; }
     private String paymentId;
 
     private String paymentStatus;

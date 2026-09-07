@@ -10,14 +10,16 @@ import {
     Package as PackageIcon, IndianRupee, CheckCircle, X,
     AlertCircle
 } from 'lucide-react';
-import { productsApi } from '../services/api';
+import { productsApi, wishlistApi } from '../services/api';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import Toast from '../components/Toast';
 import ProductReviews from '../components/ProductReviews';
 
 const ProductDetailsPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const { addToCart: addToCartContext } = useCart();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -36,7 +38,8 @@ const ProductDetailsPage = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
         fetchProduct();
-    }, [productId]);
+        if (isAuthenticated) wishlistApi.getAll().then(items => setIsInWishlist(items.some(item => String(item.id) === String(productId)))).catch(() => setIsInWishlist(false));
+    }, [productId, isAuthenticated]);
 
     const fetchProduct = async () => {
         setLoading(true);
@@ -44,38 +47,22 @@ const ProductDetailsPage = () => {
             const data = await productsApi.getById(productId);
             const mappedProduct = {
                 ...data,
-                images: data.imageUrl ? [data.imageUrl, data.imageUrl, data.imageUrl] : Array(3).fill('https://via.placeholder.com/400x400?text=Anjaneya+Herbals'),
+                images: data.imageUrl ? [data.imageUrl] : [],
                 discountedPrice: data.price,
                 originalPrice: data.oldPrice || data.price,
-                rating: data.rating || 4.5,
-                ratingCount: data.reviewCount || 125,
-                reviewCount: data.reviewCount || 125,
+                rating: data.rating ?? 0,
+                ratingCount: data.reviewCount ?? 0,
+                reviewCount: data.reviewCount ?? 0,
                 brand: 'Anjaneya Herbals',
                 category: data.categoryName || 'Ayurvedic Products',
                 variants: data.variants || [],
-                offers: data.offers || [
-                    "Get 10% cashback on orders above ₹2000",
-                    "Free shipping on orders above ₹999",
-                    "Buy 2 get 10% extra discount"
-                ],
+                offers: [],
                 specifications: {
-                    'Net Weight': '500g',
-                    'Shelf Life': '24 Months',
-                    'Ingredients': '100% Natural Herbs',
-                    'Certification': 'Ayurvedic Certified',
-                    'Usage': '1-2 teaspoons daily',
-                    'Diet Type': 'Vegetarian',
-                    ...data.specifications
+                    'Ingredients': data.ingredients || 'Refer to package label',
+                    'Category': data.categoryName || 'Not specified',
                 },
-                features: data.features || [
-                    '100% Natural & Organic',
-                    'No Artificial Preservatives',
-                    'Traditional Ayurvedic Formulation',
-                    'Lab Tested for Purity',
-                    'GMP Certified Manufacturing'
-                ],
-                seller: { name: 'Anjaneya Herbals', rating: '4.8/5' },
-                stock: data.stock || 50
+                additionalInfo: {},
+                stock: data.stock ?? 0
             };
             setProduct(mappedProduct);
         } catch (error) {
@@ -113,28 +100,14 @@ const ProductDetailsPage = () => {
         navigate('/checkout');
     };
 
-    const toggleWishlist = () => {
-        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-
-        if (isInWishlist) {
-            const newWishlist = wishlist.filter(item => item.id !== product.id);
-            localStorage.setItem('wishlist', JSON.stringify(newWishlist));
-            setIsInWishlist(false);
-            showToastMessage('💔 Removed from wishlist');
-        } else {
-            wishlist.push({
-                id: product.id,
-                name: product.name,
-                image: product.images[0],
-                price: product.discountedPrice,
-                originalPrice: product.originalPrice,
-                rating: product.rating,
-                reviews: product.reviewCount
-            });
-            localStorage.setItem('wishlist', JSON.stringify(wishlist));
-            setIsInWishlist(true);
-            showToastMessage('❤️ Added to wishlist');
-        }
+    const toggleWishlist = async () => {
+        if (!isAuthenticated) { navigate('/login'); return; }
+        try {
+            if (isInWishlist) await wishlistApi.remove(product.id);
+            else await wishlistApi.add(product.id);
+            setIsInWishlist(!isInWishlist);
+            showToastMessage(isInWishlist ? 'Removed from wishlist' : 'Saved to wishlist');
+        } catch (error) { showToastMessage(error.message); }
     };
 
     const showToastMessage = (message) => {
@@ -145,9 +118,7 @@ const ProductDetailsPage = () => {
 
     const checkDelivery = () => {
         if (pincode.length === 6) {
-            const estimates = ['Tomorrow', '2-3 days', '3-5 days', '1 week'];
-            const randomEstimate = estimates[Math.floor(Math.random() * estimates.length)];
-            setDeliveryEstimate(`Delivery by ${randomEstimate}`);
+            setDeliveryEstimate('Contact us to confirm service availability and delivery time for this pincode.');
         }
     };
 

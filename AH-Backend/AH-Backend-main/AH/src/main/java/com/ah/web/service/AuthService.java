@@ -52,12 +52,12 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT))) {
             throw new BadRequestException("Email already exists");
         }
 
         User user = User.builder()
-                .email(request.getEmail())
+                .email(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT))
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -76,7 +76,7 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
 
-    User user = userRepository.findByEmail(request.getEmail())
+    User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT))
             .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
     if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {

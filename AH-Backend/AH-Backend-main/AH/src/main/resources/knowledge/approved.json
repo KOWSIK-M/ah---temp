@@ -1,0 +1,70 @@
+[
+  {
+    "id": "ayurveda-basics",
+    "title": "About Ayurveda",
+    "keywords": [
+      "ayurveda",
+      "ayurvedic",
+      "traditional"
+    ],
+    "text": "Ayurveda is a traditional Indian system of medicine. Evidence for specific treatments varies; traditional use does not establish that a product treats or cures a disease.",
+    "source": "https://www.nccih.nih.gov/health/ayurvedic-medicine-in-depth"
+  },
+  {
+    "id": "herbal-safety",
+    "title": "Herbal product safety",
+    "keywords": [
+      "herb",
+      "herbal",
+      "natural",
+      "safety",
+      "supplement"
+    ],
+    "text": "Natural does not automatically mean safe. Some Ayurvedic preparations may contain toxic metals. Check ingredients and product quality, and discuss herbal supplements with a qualified healthcare professional.",
+    "source": "https://www.nccih.nih.gov/health/ayurvedic-medicine-in-depth"
+  },
+  {
+    "id": "care-boundaries",
+    "title": "Using Ayurveda alongside healthcare",
+    "keywords": [
+      "ayurveda",
+      "herbal",
+      "medicine",
+      "safety"
+    ],
+    "text": "Do not use Ayurvedic products to postpone medical care or replace prescribed treatment. This assistant provides general information and catalog facts, not diagnosis or personalized treatment.",
+    "source": "https://www.nccih.nih.gov/health/ayurvedic-medicine-in-depth"
+  },
+  {
+    "id": "nuts-allergens",
+    "title": "Nuts and allergens",
+    "keywords": [
+      "almond",
+      "walnut",
+      "cashew",
+      "nut",
+      "dry fruit",
+      "dried fruit",
+      "allergen",
+      "allergy"
+    ],
+    "text": "Tree nuts such as almonds, walnuts and cashews can cause allergic reactions. Check the ingredient and allergen information on each package; do not assume a product is safe because it is natural.",
+    "source": "https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies"
+  },
+  {
+    "id": "label-check",
+    "title": "Checking dry-fruit labels",
+    "keywords": [
+      "dry fruit",
+      "dried fruit",
+      "raisin",
+      "date",
+      "fig",
+      "sulfite",
+      "label",
+      "ingredient"
+    ],
+    "text": "Check the package label for ingredients and allergens before choosing dried fruits or mixed nuts. Product-specific additives and cross-contact information must come from the actual label, not assumptions.",
+    "source": "https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies"
+  }
+]

@@ -163,7 +163,7 @@ const Navbar = () => {
                             className="hidden sm:block p-2 rounded-full hover:bg-brand-sand transition-colors"
                             onClick={() => {
                                 // Implement search functionality
-                                toast.success('Search feature coming soon!');
+                                navigate('/products');
                             }}
                         >
                             <Search size={20} className="text-brand-earth" />

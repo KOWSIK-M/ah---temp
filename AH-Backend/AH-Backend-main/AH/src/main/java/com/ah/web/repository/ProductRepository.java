@@ -116,6 +116,10 @@ Page<Product> findWithAdvancedFilters(
 
     List<Product> findTop5ByStockLessThanEqualOrderByStockAsc(int stock);
 
+    @Modifying
+    @Query("UPDATE Product p SET p.stock = p.stock + :qty WHERE p.id = :id")
+    int restoreStock(@Param("id") Long id, @Param("qty") int qty);
+
     // Atomic stock decrement — returns 1 on success, 0 if stock insufficient
     @Modifying
     @Query("UPDATE Product p SET p.stock = p.stock - :qty WHERE p.id = :id AND p.stock >= :qty")
