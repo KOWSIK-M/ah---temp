@@ -13,6 +13,11 @@ import Toast from '../components/Toast';
 import { useCart } from '../contexts/CartContext';
 import { couponApi } from '../services/api';
 
+const SUGGESTED_COUPONS = [
+  { code: 'WELCOME10', label: '10% off your order' },
+  { code: 'HERBAL20', label: '20% off above ₹500' },
+];
+
 const CartPage = () => {
   const navigate = useNavigate();
   const { cartItems, loading: cartLoading, updateQuantity, removeFromCart, clearCart, getCartTotal, refreshCart } = useCart();
@@ -411,15 +416,23 @@ const CartPage = () => {
               <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-green-700 text-sm">{appliedCoupon.name}</p>
+                    <p className="font-medium text-green-700 text-sm">{appliedCoupon.code} applied</p>
                     <p className="text-xs text-green-600">
-                      {appliedCoupon.discount}% off - ₹{calculateDiscount().toLocaleString()}
+                      You save ₹{calculateDiscount().toLocaleString('en-IN')}
                     </p>
                   </div>
                 </div>
               </div>
             ) : showCouponInput ? (
               <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {SUGGESTED_COUPONS.map((coupon) => (
+                    <button key={coupon.code} type="button" onClick={() => setCouponCode(coupon.code)} className="rounded-lg border border-dashed border-green-300 bg-green-50 p-2 text-left">
+                      <span className="block text-xs font-bold text-green-800">{coupon.code}</span>
+                      <span className="block text-[10px] text-green-700">{coupon.label}</span>
+                    </button>
+                  ))}
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -734,6 +747,27 @@ const CartPage = () => {
             {/* Right Column - Order Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
+                <div className="surface-card rounded-2xl p-5">
+                  <div className="mb-3 flex items-center gap-2 font-bold text-gray-900"><TagIcon size={18} className="text-brand-moss" /> Apply coupon</div>
+                  {!appliedCoupon ? (
+                    <>
+                      <div className="mb-3 grid grid-cols-2 gap-2">
+                        {SUGGESTED_COUPONS.map((coupon) => (
+                          <button key={coupon.code} type="button" onClick={() => setCouponCode(coupon.code)} className="rounded-xl border border-dashed border-green-300 bg-green-50 p-2 text-left">
+                            <span className="block text-xs font-bold text-green-800">{coupon.code}</span>
+                            <span className="block text-[10px] text-green-700">{coupon.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} onKeyDown={(event) => event.key === 'Enter' && applyCoupon()} placeholder="Coupon code" className="min-w-0 flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm uppercase focus:border-brand-moss focus:outline-none" />
+                        <button onClick={applyCoupon} disabled={!couponCode.trim() || couponLoading} className="rounded-xl bg-brand-moss px-4 text-sm font-semibold text-white disabled:opacity-50">Apply</button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between rounded-xl bg-green-50 p-3 text-sm text-green-800"><span><strong>{appliedCoupon.code}</strong> applied</span><button onClick={() => setAppliedCoupon(null)} className="text-red-600">Remove</button></div>
+                  )}
+                </div>
                 {/* Order Summary Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                   <h3 className="font-bold text-gray-900 mb-6 text-lg">Order Summary</h3>
@@ -755,9 +789,9 @@ const CartPage = () => {
                       <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-green-700">{appliedCoupon.name}</p>
+                            <p className="font-medium text-green-700">{appliedCoupon.code} applied</p>
                             <p className="text-sm text-green-600">
-                              {appliedCoupon.discount}% off - ₹{calculateDiscount().toLocaleString()}
+                              You save ₹{calculateDiscount().toLocaleString('en-IN')}
                             </p>
                           </div>
                           <button

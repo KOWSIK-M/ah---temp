@@ -13,7 +13,6 @@ import healthWellnessImg from '../assets/category-covers/health-wellness.jpg';
 const CategorySection = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
     // Map slugs to local images
     const coverImages = {
@@ -33,7 +32,6 @@ const CategorySection = () => {
                 setCategories(data);
             } catch (err) {
                 console.error('Error fetching categories:', err);
-                setError(err.message);
                 // Fallback to default categories if API fails
                 setCategories([
                     { id: 1, name: "Spices", slug: "spices" },
@@ -59,10 +57,10 @@ const CategorySection = () => {
                         <h2 className="text-3xl font-serif font-bold text-brand-black mb-3">Shop by Category</h2>
                         <div className="w-20 h-1 bg-brand-yellow mx-auto rounded-full"></div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="animate-pulse">
-                                <div className="w-36 h-48 mx-auto bg-gray-200 rounded-t-[4rem] rounded-b-md"></div>
+                                <div className="w-full max-w-36 aspect-[3/4] mx-auto bg-gray-200 rounded-t-[4rem] rounded-b-md"></div>
                                 <div className="h-4 bg-gray-200 mt-4 mx-auto w-24 rounded"></div>
                             </div>
                         ))}
@@ -96,14 +94,14 @@ const CategorySection = () => {
                     <div className="w-20 h-1 bg-brand-yellow mx-auto rounded-full"></div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
                     {categories.map((cat) => (
                         <Link 
                             key={cat.id} 
                             to={`/category/${cat.slug}`}
                             className="group cursor-pointer"
                         >
-                            <div className="relative w-36 h-48 mx-auto overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 rounded-t-[4rem] rounded-b-md border border-brand-sand group-hover:border-brand-yellow">
+                            <div className="relative w-full max-w-36 aspect-[3/4] mx-auto overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 rounded-t-[4rem] rounded-b-md border border-brand-sand group-hover:border-brand-yellow">
                                 <img
                                     src={coverImages[cat.slug] || cat.imageUrl || `https://images.unsplash.com/photo-1544367563-12123d815079?w=400`}
                                     alt={cat.name}

@@ -107,9 +107,13 @@ const AllProductsPage = () => {
         rating: p.rating || 0,
         reviews: p.reviewCount || 0,
         sale: p.onSale,
+        featured: p.featured,
         category: p.categoryName,
         stock: p.stock,
-        slug: p.slug
+        slug: p.slug,
+        shortDescription: p.shortDescription,
+        weight: p.weight,
+        unit: p.unit
     });
 
     // Clear all filters

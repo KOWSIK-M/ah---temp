@@ -31,7 +31,7 @@ function HomePage() {
     };
 
     return (
-        <div className="min-h-screen bg-brand-cream font-sans pb-20 lg:pb-0">
+        <div className="min-h-screen bg-brand-cream font-sans pb-20 lg:pb-0 overflow-x-hidden">
             {!categoryId && <Hero />}
             <div id="products">
                 {!categoryId && <CategorySection />}
@@ -47,7 +47,7 @@ function HomePage() {
             {!categoryId && (
                 <>
                     {/* Second Product Section */}
-                    <div className="py-8 bg-gradient-to-b from-brand-cream to-brand-sand">
+                    <div className="botanical-section py-4">
                         <ProductGrid title="New Arrivals" />
                     </div>
 

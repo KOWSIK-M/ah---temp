@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { chatApi } from '../services/api';
 import { Link } from 'react-router-dom';
+import aiLeavesIcon from '../assets/ai-leaves.png';
 import {
   X, Send, Leaf, Loader2, ShoppingBag, Star, ChevronDown, RotateCcw,
 } from 'lucide-react';
@@ -86,9 +87,7 @@ function Message({ msg }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-[#5C7A59] flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
-          <Leaf className="w-3.5 h-3.5 text-white" />
-        </div>
+        <img src={aiLeavesIcon} alt="" className="mr-2 mt-0.5 h-7 w-7 flex-shrink-0 object-contain" />
       )}
       <div className={`max-w-[82%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1.5`}>
         <div
@@ -124,7 +123,6 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -151,7 +149,6 @@ export default function ChatWidget() {
     const userMsg = { id: Date.now(), role: 'user', content: trimmed };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setError(null);
     setLoading(true);
 
     try {
@@ -166,8 +163,7 @@ export default function ChatWidget() {
           suggestions: data.suggestions || [],
         },
       ]);
-    } catch (err) {
-      setError('Something went wrong. Please try again.');
+    } catch {
       setMessages(prev => [
         ...prev,
         {
@@ -192,7 +188,6 @@ export default function ChatWidget() {
   const resetChat = () => {
     setMessages([WELCOME_MESSAGE]);
     setInput('');
-    setError(null);
   };
 
   return (
@@ -207,12 +202,13 @@ export default function ChatWidget() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#5C7A59] text-white shadow-lg flex items-center justify-center"
+            className="fixed bottom-3 right-3 z-50 h-[4.5rem] w-[4.5rem] border-0 bg-transparent p-0 drop-shadow-[0_9px_10px_rgba(30,58,47,.3)] sm:bottom-5 sm:right-5 sm:h-20 sm:w-20"
             aria-label="Open Ayurvedic assistant"
           >
-            <Leaf className="w-6 h-6" />
-            {/* Pulse ring */}
-            <span className="absolute inset-0 rounded-full bg-[#5C7A59]/40 animate-ping" />
+            <img src={aiLeavesIcon} alt="" className="h-full w-full object-contain" />
+            <span className="pointer-events-none absolute bottom-[23%] right-[13%] -rotate-6 text-[9px] font-black uppercase tracking-wide text-white drop-shadow sm:text-[10px]">
+              Ask AI
+            </span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -225,15 +221,13 @@ export default function ChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-6 right-6 z-50 w-[360px] max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
-            style={{ height: '520px' }}
+            className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 w-[380px] max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+            style={{ height: 'min(560px, calc(100dvh - 24px))' }}
           >
             {/* Header */}
             <div className="bg-[#5C7A59] text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <Leaf className="w-4 h-4" />
-                </div>
+                <img src={aiLeavesIcon} alt="" className="h-9 w-9 flex-shrink-0 object-contain drop-shadow" />
                 <div>
                   <p className="font-semibold text-sm">Vaidya</p>
                   <p className="text-[10px] text-green-200">Ayurvedic Wellness Guide</p>
@@ -266,9 +260,7 @@ export default function ChatWidget() {
               {/* Loading indicator */}
               {loading && (
                 <div className="flex justify-start mb-3">
-                  <div className="w-7 h-7 rounded-full bg-[#5C7A59] flex items-center justify-center flex-shrink-0 mr-2">
-                    <Leaf className="w-3.5 h-3.5 text-white" />
-                  </div>
+                  <img src={aiLeavesIcon} alt="" className="mr-2 h-7 w-7 flex-shrink-0 object-contain" />
                   <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-[#5C7A59] rounded-full animate-bounce [animation-delay:0ms]" />
                     <span className="w-1.5 h-1.5 bg-[#5C7A59] rounded-full animate-bounce [animation-delay:150ms]" />
@@ -321,7 +313,7 @@ export default function ChatWidget() {
                 </button>
               </div>
               <p className="text-[9px] text-gray-400 text-center mt-1.5">
-                Powered by Claude AI · Not a substitute for medical advice
+                Catalog-based AI · Wellness information only
               </p>
             </div>
           </motion.div>

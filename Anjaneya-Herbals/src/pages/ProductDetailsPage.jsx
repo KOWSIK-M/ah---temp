@@ -1,691 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-    Star, ChevronLeft, ChevronRight, Heart, Share2, Truck,
-    Shield, Check, Clock, Package, MapPin, ChevronDown,
-    ChevronUp, ShoppingBag, Info, Leaf, Tag, Zap,
-    TrendingUp, Award, Sparkles, Minus, Plus, ArrowLeft,
-    Truck as TruckIcon, ShieldCheck, Clock as ClockIcon,
-    Package as PackageIcon, IndianRupee, CheckCircle, X,
-    AlertCircle
+  ArrowLeft, ChevronRight, Heart, Leaf, Minus, PackageCheck,
+  Plus, Share2, ShieldCheck, ShoppingBag, Star, Truck,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { productsApi, wishlistApi } from '../services/api';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import Toast from '../components/Toast';
 import ProductReviews from '../components/ProductReviews';
 
-const ProductDetailsPage = () => {
-    const { productId } = useParams();
-    const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
-    const { addToCart: addToCartContext } = useCart();
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [quantity, setQuantity] = useState(1);
-    const [isInWishlist, setIsInWishlist] = useState(false);
-    const [showToast, setShowToast] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
-    const [expandedSection, setExpandedSection] = useState('description');
-    const [selectedVariant, setSelectedVariant] = useState(null);
-    const [pincode, setPincode] = useState('');
-    const [deliveryEstimate, setDeliveryEstimate] = useState('');
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    const [showImageZoom, setShowImageZoom] = useState(false);
+const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23eef2e7'/%3E%3Cpath d='M370 215c100 41 121 146 22 222-72-75-82-154-22-222Zm-12 231c-44-78-112-101-185-65 32 90 101 115 185 65Z' fill='%239CAF88'/%3E%3Ctext x='50%25' y='72%25' text-anchor='middle' font-family='Arial' font-size='34' fill='%23315b45'%3EAnjaneya Herbals%3C/text%3E%3C/svg%3E";
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-        fetchProduct();
-        if (isAuthenticated) wishlistApi.getAll().then(items => setIsInWishlist(items.some(item => String(item.id) === String(productId)))).catch(() => setIsInWishlist(false));
-    }, [productId, isAuthenticated]);
+export default function ProductDetailsPage() {
+  const { productId } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [wishlisted, setWishlisted] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [openSection, setOpenSection] = useState('details');
 
-    const fetchProduct = async () => {
-        setLoading(true);
-        try {
-            const data = await productsApi.getById(productId);
-            const mappedProduct = {
-                ...data,
-                images: data.imageUrl ? [data.imageUrl] : [],
-                discountedPrice: data.price,
-                originalPrice: data.oldPrice || data.price,
-                rating: data.rating ?? 0,
-                ratingCount: data.reviewCount ?? 0,
-                reviewCount: data.reviewCount ?? 0,
-                brand: 'Anjaneya Herbals',
-                category: data.categoryName || 'Ayurvedic Products',
-                variants: data.variants || [],
-                offers: [],
-                specifications: {
-                    'Ingredients': data.ingredients || 'Refer to package label',
-                    'Category': data.categoryName || 'Not specified',
-                },
-                additionalInfo: {},
-                stock: data.stock ?? 0
-            };
-            setProduct(mappedProduct);
-        } catch (error) {
-            console.error('Error fetching product:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setLoading(true);
+    productsApi.getById(productId)
+      .then(setProduct)
+      .catch(() => setProduct(null))
+      .finally(() => setLoading(false));
+  }, [productId]);
 
-    const handleQuantityChange = (value) => {
-        const newQuantity = Math.max(1, Math.min(value, product?.stock || 50));
-        setQuantity(newQuantity);
-    };
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    wishlistApi.getAll()
+      .then((items) => setWishlisted(items.some((item) => String(item.id) === String(productId))))
+      .catch(() => setWishlisted(false));
+  }, [isAuthenticated, productId]);
 
-    const addToCart = async () => {
-        setIsAnimating(true);
-        setTimeout(() => setIsAnimating(false), 1000);
+  const images = useMemo(() => {
+    if (!product) return [];
+    const availableImages = [product.imageUrl, ...(product.additionalImages || [])].filter(Boolean);
+    return availableImages.length ? availableImages : [fallbackImage];
+  }, [product]);
 
-        try {
-            await addToCartContext(product.id, quantity, {
-                name: product.name,
-                price: product.discountedPrice || product.price,
-                imageUrl: product.images?.[0] || product.imageUrl,
-                maxStock: product.stock
-            });
-            showToastMessage('🎉 Added to cart successfully!');
-        } catch (error) {
-            showToastMessage('❌ Failed to add to cart');
-            console.error('Add to cart error:', error);
-        }
-    };
+  const price = Number(product?.price || 0);
+  const oldPrice = Number(product?.oldPrice || 0);
+  const discount = oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
+  const stock = Number(product?.stock || 0);
 
-    const buyNow = async () => {
-        await addToCart();
-        navigate('/checkout');
-    };
-
-    const toggleWishlist = async () => {
-        if (!isAuthenticated) { navigate('/login'); return; }
-        try {
-            if (isInWishlist) await wishlistApi.remove(product.id);
-            else await wishlistApi.add(product.id);
-            setIsInWishlist(!isInWishlist);
-            showToastMessage(isInWishlist ? 'Removed from wishlist' : 'Saved to wishlist');
-        } catch (error) { showToastMessage(error.message); }
-    };
-
-    const showToastMessage = (message) => {
-        setToastMessage(message);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
-
-    const checkDelivery = () => {
-        if (pincode.length === 6) {
-            setDeliveryEstimate('Contact us to confirm service availability and delivery time for this pincode.');
-        }
-    };
-
-    const shareProduct = () => {
-        if (navigator.share) {
-            navigator.share({
-                title: product.name,
-                text: `Check out ${product.name} from Anjaneya Herbals`,
-                url: window.location.href,
-            });
-        } else {
-            navigator.clipboard.writeText(window.location.href);
-            showToastMessage('📋 Link copied to clipboard!');
-        }
-    };
-
-    const discountPercentage = product ? Math.round(
-        ((product.originalPrice - product.discountedPrice) / product.originalPrice) * 100
-    ) : 0;
-
-    const ImageZoomModal = () => (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-            <div className="relative max-w-4xl max-h-[90vh]">
-                <img
-                    src={product.images[selectedImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-contain rounded-lg"
-                />
-                <button
-                    onClick={() => setShowImageZoom(false)}
-                    className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-                >
-                    <X size={24} className="text-white" />
-                </button>
-            </div>
-        </div>
-    );
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20 px-4">
-                <div className="max-w-7xl mx-auto">
-                    {/* Skeleton for Breadcrumb */}
-                    <div className="flex items-center gap-2 mb-8">
-                        <div className="h-4 w-20 bg-gray-200 rounded"></div>
-                        <div className="h-4 w-4 bg-gray-200 rounded"></div>
-                        <div className="h-4 w-24 bg-gray-200 rounded"></div>
-                    </div>
-                    
-                    <div className="grid lg:grid-cols-2 gap-8">
-                        {/* Image Skeleton */}
-                        <div className="space-y-4">
-                            <div className="aspect-square bg-gray-200 rounded-2xl"></div>
-                            <div className="grid grid-cols-4 gap-2">
-                                {[1,2,3,4].map(i => (
-                                    <div key={i} className="aspect-square bg-gray-200 rounded-lg"></div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        {/* Info Skeleton */}
-                        <div className="space-y-6">
-                            <div className="h-8 w-3/4 bg-gray-200 rounded"></div>
-                            <div className="h-6 w-1/2 bg-gray-200 rounded"></div>
-                            <div className="h-10 w-1/4 bg-gray-200 rounded"></div>
-                            <div className="h-32 bg-gray-200 rounded"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+  const addItem = async (goToCheckout = false) => {
+    if (!product || stock === 0 || adding) return;
+    setAdding(true);
+    try {
+      await addToCart(product.id, quantity, {
+        name: product.name,
+        price,
+        imageUrl: images[0],
+        maxStock: stock,
+      });
+      toast.success(`${quantity} item${quantity > 1 ? 's' : ''} added to cart`, { id: `detail-cart-${product.id}` });
+      if (goToCheckout) navigate('/checkout');
+    } catch (error) {
+      toast.error(error.message || 'Could not add this product', { id: `detail-cart-${product.id}` });
+    } finally {
+      setAdding(false);
     }
+  };
 
-    if (!product) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
-                <div className="text-center max-w-md">
-                    <div className="w-24 h-24 mx-auto bg-gradient-to-br from-red-100 to-red-50 rounded-full flex items-center justify-center mb-6">
-                        <AlertCircle size={48} className="text-red-400" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-3">Product Not Found</h2>
-                    <p className="text-gray-600 mb-6">The product you're looking for might have been moved or is no longer available.</p>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="px-6 py-3 bg-gradient-to-r from-green-500 to-yellow-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
-                    >
-                        Continue Shopping
-                    </button>
-                </div>
-            </div>
-        );
+  const toggleWishlist = async () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/product/${productId}` } });
+      return;
     }
+    try {
+      if (wishlisted) await wishlistApi.remove(product.id);
+      else await wishlistApi.add(product.id);
+      setWishlisted((value) => !value);
+      toast.success(wishlisted ? 'Removed from wishlist' : 'Saved to wishlist', { id: `wishlist-${product.id}` });
+    } catch (error) {
+      toast.error(error.message || 'Could not update wishlist', { id: `wishlist-${product.id}` });
+    }
+  };
 
-    return (
-        <>
-            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-16 lg:pt-20">
-                {/* Back Button - Mobile */}
-                <button
-                    onClick={() => navigate(-1)}
-                    className="lg:hidden fixed top-4 left-4 z-30 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center"
-                >
-                    <ArrowLeft size={20} className="text-gray-700" />
-                </button>
+  const share = async () => {
+    try {
+      if (navigator.share) await navigator.share({ title: product.name, url: window.location.href });
+      else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Product link copied', { id: 'share-product' });
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') toast.error('Could not share this product', { id: 'share-product' });
+    }
+  };
 
-                {/* Breadcrumb - Desktop */}
-                <div className="hidden lg:block bg-white/80 backdrop-blur-sm border-b border-gray-100">
-                    <div className="max-w-7xl mx-auto px-6 py-3">
-                        <nav className="flex items-center text-sm text-gray-600">
-                            <button
-                                onClick={() => navigate('/')}
-                                className="hover:text-green-600 transition-colors"
-                            >
-                                Home
-                            </button>
-                            <ChevronRight size={14} className="mx-2" />
-                            <button
-                                onClick={() => navigate('/category/' + product.category)}
-                                className="hover:text-green-600 transition-colors"
-                            >
-                                {product.category}
-                            </button>
-                            <ChevronRight size={14} className="mx-2" />
-                            <span className="text-gray-900 font-medium truncate max-w-xs">
-                                {product.name}
-                            </span>
-                        </nav>
-                    </div>
-                </div>
+  if (loading) return (
+    <main className="botanical-section min-h-screen pt-24 pb-16">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-2">
+        <div className="aspect-square animate-pulse rounded-3xl bg-white/80" />
+        <div className="space-y-4 pt-6">{[70, 95, 45, 100, 100].map((width, i) => <div key={i} className="h-7 animate-pulse rounded bg-white/80" style={{ width: `${width}%` }} />)}</div>
+      </div>
+    </main>
+  );
 
-                {/* Main Content */}
-                <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
-                    <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-                        {/* Left Column - Images */}
-                        <div className="space-y-4">
-                            {/* Main Image */}
-                            <div 
-                                onClick={() => setShowImageZoom(true)}
-                                className="relative aspect-square bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-lg cursor-zoom-in"
-                            >
-                                <img
-                                    src={product.images[selectedImageIndex]}
-                                    alt={product.name}
-                                    className="w-full h-full object-contain p-8 hover:scale-105 transition-transform duration-300"
-                                />
-                                {discountPercentage > 0 && (
-                                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-bold rounded-full shadow-lg">
-                                        {discountPercentage}% OFF
-                                    </div>
-                                )}
-                                {product.featured && (
-                                    <div className="absolute top-4 right-4 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-bold rounded-full shadow-lg">
-                                        <Star size={12} className="inline mr-1" />
-                                        Featured
-                                    </div>
-                                )}
-                            </div>
+  if (!product) return (
+    <main className="botanical-section flex min-h-screen items-center justify-center px-5 pt-24">
+      <div className="surface-card max-w-md rounded-3xl p-8 text-center">
+        <Leaf className="mx-auto mb-4 text-brand-sage" size={48} />
+        <h1 className="font-serif text-3xl text-brand-black">Product unavailable</h1>
+        <p className="my-4 text-gray-600">This item may have moved or is no longer available.</p>
+        <Link to="/products" className="btn-primary inline-flex">Browse products</Link>
+      </div>
+    </main>
+  );
 
-                            {/* Thumbnail Images */}
-                            <div className="grid grid-cols-4 gap-3">
-                                {product.images.map((img, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setSelectedImageIndex(index)}
-                                        className={`aspect-square bg-white rounded-xl border-2 overflow-hidden ${
-                                            selectedImageIndex === index
-                                                ? 'border-green-500 ring-2 ring-green-200'
-                                                : 'border-gray-200 hover:border-green-300'
-                                        }`}
-                                    >
-                                        <img
-                                            src={img}
-                                            alt={`${product.name} ${index + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
+  return (
+    <main className="botanical-section min-h-screen pt-20 sm:pt-24 pb-24 lg:pb-16">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <nav className="mb-4 flex min-w-0 items-center gap-2 overflow-hidden py-2 text-xs sm:text-sm text-gray-500">
+          <button onClick={() => navigate(-1)} className="flex flex-shrink-0 items-center gap-1 hover:text-brand-moss"><ArrowLeft size={16} /> Back</button>
+          <ChevronRight size={14} className="flex-shrink-0" />
+          <Link to="/products" className="flex-shrink-0 hover:text-brand-moss">Products</Link>
+          <ChevronRight size={14} className="flex-shrink-0" />
+          <span className="truncate text-brand-black">{product.name}</span>
+        </nav>
 
-                            {/* Trust Badges */}
-                            <div className="grid grid-cols-2 gap-3 pt-4">
-                                <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-green-200">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                            <Leaf size={20} className="text-green-600" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900 text-sm">100% Natural</p>
-                                            <p className="text-xs text-gray-500">Ayurvedic Formulation</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-yellow-200">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                            <Award size={20} className="text-yellow-600" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900 text-sm">GMP Certified</p>
-                                            <p className="text-xs text-gray-500">Quality Assured</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+        <section className="surface-card grid min-w-0 overflow-hidden rounded-3xl lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
+          <div className="min-w-0 bg-[#eef2e7]/70 p-3 sm:p-6 lg:p-8">
+            <div className="relative mx-auto aspect-square max-w-[620px] overflow-hidden rounded-2xl bg-white">
+              <img src={images[imageIndex]} alt={product.name} className="h-full w-full object-contain p-3 sm:p-8" />
+              {discount > 0 && <span className="absolute left-3 top-3 rounded-full bg-brand-terracotta px-3 py-1.5 text-xs font-bold text-white">{discount}% OFF</span>}
+            </div>
+            {images.length > 1 && (
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {images.map((image, index) => (
+                  <button key={image} onClick={() => setImageIndex(index)} className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-white ${imageIndex === index ? 'border-brand-moss' : 'border-transparent'}`}>
+                    <img src={image} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-                        {/* Right Column - Product Info */}
-                        <div className="space-y-6">
-                            {/* Product Header */}
-                            <div>
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">
-                                        {product.brand}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={toggleWishlist}
-                                            className={`p-2 rounded-lg ${isInWishlist ? 'text-red-500 bg-red-50' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'}`}
-                                        >
-                                            <Heart size={20} className={isInWishlist ? 'fill-current' : ''} />
-                                        </button>
-                                        <button
-                                            onClick={shareProduct}
-                                            className="p-2 rounded-lg text-gray-500 hover:text-blue-500 hover:bg-blue-50"
-                                        >
-                                            <Share2 size={20} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">
-                                    {product.name}
-                                </h1>
-
-                                {/* Rating */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="flex items-center">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star
-                                                key={star}
-                                                size={16}
-                                                className={`${
-                                                    star <= Math.floor(product.rating)
-                                                        ? 'text-yellow-400 fill-current'
-                                                        : 'text-gray-300'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className="text-sm text-gray-600">
-                                        {product.rating.toFixed(1)} • {product.ratingCount.toLocaleString()} ratings
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Price Section */}
-                            <div className="bg-gradient-to-r from-gray-50 to-white rounded-2xl p-5 border border-gray-200">
-                                <div className="flex items-end gap-4 mb-2">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-3xl lg:text-4xl font-bold text-gray-900">
-                                            <IndianRupee size={28} className="inline -mt-1" />
-                                            {product.discountedPrice.toLocaleString()}
-                                        </span>
-                                        {product.originalPrice > product.discountedPrice && (
-                                            <>
-                                                <span className="text-xl text-gray-500 line-through">
-                                                    <IndianRupee size={20} className="inline -mt-1" />
-                                                    {product.originalPrice.toLocaleString()}
-                                                </span>
-                                                <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-sm font-bold">
-                                                    Save {discountPercentage}%
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                                <p className="text-sm text-gray-500">Inclusive of all taxes • Free shipping above ₹999</p>
-                            </div>
-
-                            {/* Stock Status */}
-                            <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-                                <div className="flex items-center gap-3">
-                                    {product.stock > 10 ? (
-                                        <CheckCircle size={20} className="text-green-500" />
-                                    ) : (
-                                        <AlertCircle size={20} className="text-yellow-500" />
-                                    )}
-                                    <div>
-                                        <p className="font-medium text-gray-900">
-                                            {product.stock > 10 ? 'In Stock' : 'Low Stock'}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            {product.stock > 10 ? 'Ready to ship' : `Only ${product.stock} units left`}
-                                        </p>
-                                    </div>
-                                </div>
-                                {product.stock <= 10 && (
-                                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                                        <div
-                                            className="bg-red-500 h-2 rounded-full"
-                                            style={{ width: `${(product.stock / 10) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Quantity Selector */}
-                            <div>
-                                <h3 className="font-semibold text-gray-900 mb-3">Quantity</h3>
-                                <div className="flex items-center gap-6">
-                                    <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
-                                        <button
-                                            onClick={() => handleQuantityChange(quantity - 1)}
-                                            className="px-5 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 disabled:opacity-50"
-                                            disabled={quantity <= 1}
-                                        >
-                                            <Minus size={18} />
-                                        </button>
-                                        <span className="px-6 py-3 text-lg font-bold text-gray-900 min-w-[60px] text-center">
-                                            {quantity}
-                                        </span>
-                                        <button
-                                            onClick={() => handleQuantityChange(quantity + 1)}
-                                            className="px-5 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 disabled:opacity-50"
-                                            disabled={quantity >= product.stock}
-                                        >
-                                            <Plus size={18} />
-                                        </button>
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                        <div className="font-medium">{product.stock} units available</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Delivery Check */}
-                            <div>
-                                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                    <TruckIcon size={20} />
-                                    Delivery Options
-                                </h3>
-                                <div className="flex gap-3">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter pincode"
-                                        value={pincode}
-                                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none"
-                                    />
-                                    <button
-                                        onClick={checkDelivery}
-                                        className="px-6 py-3 bg-gradient-to-r from-green-500 to-yellow-500 text-white rounded-xl font-medium shadow-md hover:shadow-lg"
-                                    >
-                                        Check
-                                    </button>
-                                </div>
-                                {deliveryEstimate && (
-                                    <p className="mt-3 text-green-600 font-medium flex items-center gap-2">
-                                        <CheckCircle size={16} />
-                                        {deliveryEstimate}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="space-y-3 pt-4">
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={addToCart}
-                                        className="flex-1 py-3.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                                    >
-                                        <ShoppingBag size={20} />
-                                        Add to Cart
-                                    </button>
-                                    <button
-                                        onClick={buyNow}
-                                        className="flex-1 py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl"
-                                    >
-                                        Buy Now
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Trust Indicators */}
-                            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <ShieldCheck size={16} className="text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Secure Payment</p>
-                                        <p className="text-xs text-gray-500">SSL Encrypted</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                        <PackageIcon size={16} className="text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Easy Returns</p>
-                                        <p className="text-xs text-gray-500">30 Day Policy</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Mobile Fixed CTA */}
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t shadow-2xl p-4 z-40">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xl font-bold text-gray-900">
-                                        <IndianRupee size={18} className="inline -mt-1" />
-                                        {product.discountedPrice}
-                                    </span>
-                                    {product.originalPrice > product.discountedPrice && (
-                                        <span className="text-sm text-gray-500 line-through">
-                                            <IndianRupee size={14} className="inline -mt-0.5" />
-                                            {product.originalPrice}
-                                        </span>
-                                    )}
-                                </div>
-                                <span className="text-xs text-green-600 font-medium">In stock</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={addToCart}
-                                    className="px-5 py-2.5 border-2 border-green-600 text-green-600 rounded-lg font-medium hover:bg-green-50"
-                                >
-                                    Add to Cart
-                                </button>
-                                <button
-                                    onClick={buyNow}
-                                    className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-yellow-600 text-white rounded-lg font-medium shadow-md"
-                                >
-                                    Buy Now
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Product Details Sections */}
-                <div className="max-w-7xl mx-auto px-4 py-8">
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        {/* Tabs Navigation */}
-                        <div className="border-b border-gray-200">
-                            <div className="flex overflow-x-auto hide-scrollbar">
-                                {['description', 'specifications', 'seller', 'reviews'].map((section) => (
-                                    <button
-                                        key={section}
-                                        onClick={() => setExpandedSection(section)}
-                                        className={`px-6 py-4 font-medium whitespace-nowrap border-b-2 transition-colors ${
-                                            expandedSection === section
-                                                ? 'border-green-500 text-green-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700'
-                                        }`}
-                                    >
-                                        {section.charAt(0).toUpperCase() + section.slice(1)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="p-6">
-                            {expandedSection === 'description' && (
-                                <div className="space-y-6">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Product Description</h3>
-                                    <p className="text-gray-700 leading-relaxed">{product.description}</p>
-                                    
-                                    {product.features && product.features.length > 0 && (
-                                        <div className="mt-8">
-                                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Key Features</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {product.features.map((feature, index) => (
-                                                    <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
-                                                        <CheckCircle size={18} className="text-green-500 mt-0.5 flex-shrink-0" />
-                                                        <span className="text-gray-700">{feature}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {expandedSection === 'specifications' && (
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-6">Product Specifications</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {Object.entries(product.specifications).map(([key, value], index) => (
-                                            <div key={index} className="flex border-b border-gray-100 pb-3">
-                                                <span className="w-1/3 font-medium text-gray-700">{key}</span>
-                                                <span className="w-2/3 text-gray-600">{value}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {expandedSection === 'seller' && (
-                                <div className="space-y-6">
-                                    <h3 className="text-xl font-bold text-gray-900">Seller Information</h3>
-                                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                            <div>
-                                                <h4 className="text-lg font-bold text-gray-900">{product.seller.name}</h4>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <div className="flex items-center">
-                                                        {[1,2,3,4,5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                size={14}
-                                                                className={`${
-                                                                    star <= 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="text-gray-600">{product.seller.rating} rating</span>
-                                                </div>
-                                            </div>
-                                            <button className="px-6 py-2 bg-white border-2 border-green-600 text-green-600 rounded-lg font-medium hover:bg-green-50">
-                                                Visit Store
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {expandedSection === 'reviews' && (
-                                <ProductReviews productId={product.id} />
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Similar Products */}
-                <div className="max-w-7xl mx-auto px-4 py-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">You Might Also Like</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {/* Placeholder for similar products */}
-                        {[1,2,3,4].map((i) => (
-                            <div key={i} className="bg-white rounded-xl border border-gray-200 p-4">
-                                <div className="aspect-square bg-gray-100 rounded-lg mb-3"></div>
-                                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+          <div className="min-w-0 p-5 sm:p-8 lg:p-10">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-sage">{product.categoryName || 'Anjaneya Herbals'}</p>
+                <h1 className="mt-2 break-words font-serif text-3xl sm:text-4xl font-bold leading-tight text-brand-black">{product.name}</h1>
+              </div>
+              <div className="flex flex-shrink-0 gap-1">
+                <button onClick={toggleWishlist} aria-label="Save to wishlist" className={`rounded-xl p-2.5 ${wishlisted ? 'bg-red-50 text-red-500' : 'bg-brand-cream text-brand-moss'}`}><Heart size={20} className={wishlisted ? 'fill-current' : ''} /></button>
+                <button onClick={share} aria-label="Share product" className="rounded-xl bg-brand-cream p-2.5 text-brand-moss"><Share2 size={20} /></button>
+              </div>
             </div>
 
-            {/* Image Zoom Modal */}
-            <AnimatePresence>
-                {showImageZoom && <ImageZoomModal />}
-            </AnimatePresence>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+              <span className="inline-flex items-center gap-1 rounded-lg bg-brand-moss px-2 py-1 font-bold text-white">{Number(product.rating || 0).toFixed(1)} <Star size={13} className="fill-current" /></span>
+              <button onClick={() => setOpenSection('reviews')} className="text-gray-500 underline-offset-4 hover:underline">{product.reviewCount || 0} customer reviews</button>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${stock > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>{stock > 0 ? `${stock} in stock` : 'Out of stock'}</span>
+            </div>
 
-            {/* Toast Notification */}
-            <AnimatePresence>
-                {showToast && (
-                    <Toast message={toastMessage} onClose={() => setShowToast(false)} />
-                )}
-            </AnimatePresence>
-        </>
-    );
-};
+            <div className="mt-6 flex flex-wrap items-baseline gap-3 border-y border-brand-sage/20 py-5">
+              <span className="text-3xl font-bold text-brand-moss">₹{price.toLocaleString('en-IN')}</span>
+              {oldPrice > price && <span className="text-base text-gray-400 line-through">₹{oldPrice.toLocaleString('en-IN')}</span>}
+              <span className="text-xs text-gray-500">Inclusive of taxes</span>
+            </div>
 
-export default ProductDetailsPage;
+            <p className="mt-5 break-words text-sm sm:text-base leading-7 text-gray-600">{product.shortDescription || product.description}</p>
+
+            {(product.weight || product.unit) && <div className="mt-5"><p className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Pack size</p><span className="inline-flex rounded-xl border-2 border-brand-moss bg-green-50 px-4 py-2 text-sm font-semibold text-brand-moss">{product.weight} {product.unit}</span></div>}
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="flex h-12 items-center rounded-xl border border-brand-sage/40 bg-white">
+                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="h-full px-3" aria-label="Decrease quantity"><Minus size={16} /></button>
+                <span className="w-9 text-center font-semibold">{quantity}</span>
+                <button onClick={() => setQuantity((q) => Math.min(stock || 1, q + 1))} className="h-full px-3" aria-label="Increase quantity"><Plus size={16} /></button>
+              </div>
+              <button onClick={() => addItem(false)} disabled={adding || stock === 0} className="flex h-12 min-w-[150px] flex-1 items-center justify-center gap-2 rounded-xl bg-brand-moss px-5 font-semibold text-white hover:bg-brand-terracotta disabled:opacity-50"><ShoppingBag size={18} /> Add to cart</button>
+              <button onClick={() => addItem(true)} disabled={adding || stock === 0} className="h-12 w-full rounded-xl border-2 border-brand-moss px-6 font-semibold text-brand-moss hover:bg-brand-moss hover:text-white sm:w-auto">Buy now</button>
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              {[{ icon: Leaf, title: 'Plant based', text: 'Thoughtfully sourced' }, { icon: ShieldCheck, title: 'Secure', text: 'Protected checkout' }, { icon: Truck, title: 'Delivery', text: 'Calculated at checkout' }].map(({ icon: Icon, title, text }) => (
+                <div key={title} className="rounded-2xl bg-brand-cream p-3 text-center"><Icon className="mx-auto text-brand-moss" size={20} /><p className="mt-1 text-xs font-bold">{title}</p><p className="hidden sm:block text-[10px] text-gray-500">{text}</p></div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="surface-card mt-6 min-w-0 rounded-3xl p-4 sm:p-7">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
+            {[['details', 'Product details'], ['ingredients', 'Ingredients'], ['usage', 'How to use'], ['reviews', 'Reviews']].map(([id, label]) => (
+              <button key={id} onClick={() => setOpenSection(id)} className={`rounded-xl px-3 py-2 text-xs font-semibold sm:flex-shrink-0 sm:rounded-full sm:px-4 sm:text-sm ${openSection === id ? 'bg-brand-moss text-white' : 'bg-brand-cream text-brand-black'}`}>{label}</button>
+            ))}
+          </div>
+          <div className="mt-5 min-w-0 break-words text-sm sm:text-base leading-7 text-gray-600">
+            {openSection === 'details' && <><h2 className="mb-2 font-serif text-2xl font-bold text-brand-black">About this product</h2><p>{product.description || product.shortDescription || 'See the product package for details.'}</p>{product.benefits && <div className="mt-4 rounded-2xl bg-green-50 p-4"><p className="font-semibold text-brand-moss">Product information</p><p>{product.benefits}</p></div>}</>}
+            {openSection === 'ingredients' && <><h2 className="mb-2 font-serif text-2xl font-bold text-brand-black">Ingredients</h2><p>{product.ingredients || 'Please refer to the package label for the complete ingredient list.'}</p></>}
+            {openSection === 'usage' && <><h2 className="mb-2 font-serif text-2xl font-bold text-brand-black">How to use</h2><p>{product.usage || 'Follow the directions printed on the package.'}</p><div className="mt-4 flex gap-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900"><PackageCheck className="flex-shrink-0" size={20} /><p>Check the package label and stop use if irritation occurs. Product information is not medical advice.</p></div></>}
+            {openSection === 'reviews' && <ProductReviews productId={product.id} />}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

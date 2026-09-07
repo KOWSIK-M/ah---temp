@@ -1,23 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import herbalTeaImage from '../assets/hero-herbal-tea.jpg';
+import turmericImage from '../assets/hero-turmeric.jpg';
+import dryFruitsImage from '../assets/hero-dry-fruits.jpg';
 
 const slides = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80", // Spices/Turmeric
-    title: "Pure & Authentic Spices",
-    subtitle: "Experience the true essence of nature with our premium hand-ground spices.",
-    cta: "Shop Spices",
-    link: "/category/spices"
+    image: herbalTeaImage,
+    title: "Botanical Wellness",
+    subtitle: "Thoughtfully selected herbs inspired by time-honoured Indian wellness traditions.",
+    cta: "Explore Wellness",
+    link: "/category/health-wellness",
+    position: "52% center"
   },
   {
     id: 2,
-    image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80", // Herbal Powders
-    title: "Traditional Herbal Powders",
-    subtitle: "Ancient Ayurvedic wisdom for your daily wellness journey.",
+    image: turmericImage,
+    title: "Traditional Herbal Care",
+    subtitle: "Pure turmeric and botanical blends prepared for simple everyday rituals.",
     cta: "Explore Herbs",
-    link: "/category/herbal-powders"
+    link: "/products",
+    position: "62% center"
+  },
+  {
+    id: 3,
+    image: dryFruitsImage,
+    title: "Premium Dry Fruits",
+    subtitle: "A colourful selection of nuts and dried fruits chosen for freshness and quality.",
+    cta: "Shop Dry Fruits",
+    link: "/category/dry-fruits",
+    position: "center"
   }
 ];
 
@@ -31,11 +44,8 @@ const Hero = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
-  const prevSlide = () => setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-
   return (
-    <div className="relative w-full h-[85vh] overflow-hidden bg-brand-black">
+    <div className="relative w-full min-h-[560px] h-[78svh] sm:h-[82vh] overflow-hidden bg-brand-black pt-16">
       <AnimatePresence mode='wait'>
         <motion.div
           key={current}
@@ -53,13 +63,14 @@ const Hero = () => {
             animate={{ scale: 1 }}
             transition={{ duration: 6, ease: "easeOut" }}
             className="w-full h-full object-cover opacity-80"
+            style={{ objectPosition: slides[current].position }}
           />
           
           {/* Cinematic Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-brand-black/90 via-brand-black/40 to-transparent" />
 
           {/* Content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-4 z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-5 pt-16 pb-20 z-10">
             <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -68,7 +79,7 @@ const Hero = () => {
                 <h2 className="text-brand-yellow tracking-[0.2em] font-sans text-xs md:text-sm uppercase mb-4">
                     Royal Ayurveda
                 </h2>
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium mb-6 text-brand-cream drop-shadow-2xl px-4 leading-tight">
+                <h1 className="text-[clamp(2.6rem,12vw,5.5rem)] font-serif font-medium mb-5 text-brand-cream drop-shadow-2xl leading-[0.96] max-w-5xl">
                 {slides[current].title}
                 </h1>
             </motion.div>
@@ -77,7 +88,7 @@ const Hero = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 0.9 }}
               transition={{ delay: 0.8, duration: 1 }}
-              className="text-lg md:text-2xl mb-10 max-w-xl text-gray-200 font-light font-sans tracking-wide px-6"
+              className="text-sm sm:text-lg md:text-xl mb-8 max-w-xl text-gray-100 font-light font-sans leading-relaxed px-2"
             >
               {slides[current].subtitle}
             </motion.p>

@@ -1,127 +1,89 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ShoppingBag, Eye, Check } from 'lucide-react';
+import { Check, ShoppingCart, Star } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import toast from 'react-hot-toast';
 
-const ProductCard = ({ product }) => {
-    const { addToCart } = useCart();
-    const [adding, setAdding] = useState(false);
-    const [added, setAdded] = useState(false);
+const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='600'%3E%3Crect width='100%25' height='100%25' fill='%23eef2e7'/%3E%3Cpath d='M245 145c68 28 82 99 15 151-49-51-56-105-15-151Zm-8 157c-30-53-76-69-126-44 22 61 69 78 126 44Z' fill='%239CAF88'/%3E%3Ctext x='50%25' y='72%25' text-anchor='middle' font-family='Arial' font-size='24' fill='%23315b45'%3EAnjaneya Herbals%3C/text%3E%3C/svg%3E";
 
-    const handleAddToCart = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (adding) return;
-        
-        setAdding(true);
-        try {
-            // Pass product data for guest cart to store product details
-            await addToCart(product.id, 1, {
-                name: product.name,
-                price: product.price,
-                imageUrl: product.image || product.imageUrl
-            });
-            setAdded(true);
-            toast.success('Added to cart!');
-            setTimeout(() => setAdded(false), 2000);
-        } catch (error) {
-            toast.error('Failed to add to cart');
-            console.error('Add to cart error:', error);
-        } finally {
-            setAdding(false);
-        }
-    };
+export default function ProductCard({ product }) {
+  const { addToCart } = useCart();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const oldPrice = Number(product.oldPrice || 0);
+  const price = Number(product.price || 0);
+  const discount = oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
 
-    return (
-        <div className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 ease-out">
-            {/* Image Container */}
-            <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden bg-gray-50">
-                <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-in-out"
-                    onError={(e) => {
-                        // data: URI never fails → onError won't fire again, loop stops
-                        e.target.onerror = null;
-                        e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f3f4f6'/%3E%3Ccircle cx='200' cy='160' r='50' fill='%23d1d5db'/%3E%3Crect x='120' y='230' width='160' height='100' rx='8' fill='%23d1d5db'/%3E%3C/svg%3E";
-                    }}
-                />
+  const handleAdd = async (event) => {
+    event.preventDefault();
+    if (adding || product.stock === 0) return;
+    setAdding(true);
+    try {
+      await addToCart(product.id, 1, {
+        name: product.name,
+        price,
+        imageUrl: product.image || product.imageUrl,
+        maxStock: product.stock,
+      });
+      setAdded(true);
+      toast.success('Added to cart', { id: `cart-${product.id}` });
+      setTimeout(() => setAdded(false), 1800);
+    } catch (error) {
+      toast.error(error.message || 'Could not add this item', { id: `cart-${product.id}` });
+    } finally {
+      setAdding(false);
+    }
+  };
 
-                {/* Badges */}
-                {product.sale && (
-                    <span className="absolute top-3 left-3 bg-brand-terracotta text-white text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-sm shadow-md">
-                        Sale
-                    </span>
-                )}
-            </Link>
-
-            {/* Overlay Actions - Desktop Hover */}
-            <div className="hidden lg:flex absolute inset-x-0 bottom-[140px] p-4 translate-y-20 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 justify-center space-x-2 pointer-events-none group-hover:pointer-events-auto">
-                <button 
-                    onClick={handleAddToCart}
-                    disabled={adding}
-                    className={`p-2 rounded-full transition-colors shadow-lg ${
-                        added 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-brand-black text-white hover:bg-brand-orange'
-                    }`}
-                    title="Add to Cart"
-                >
-                    {added ? <Check size={18} /> : <ShoppingBag size={18} />}
-                </button>
-                <Link 
-                    to={`/product/${product.id}`}
-                    className="p-2 bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-gray-50 transition-colors shadow-lg" 
-                    title="Quick View"
-                >
-                    <Eye size={18} />
-                </Link>
-            </div>
-
-            {/* Mobile Action Button (Visible always on mobile) */}
-            <button 
-                onClick={handleAddToCart}
-                disabled={adding}
-                className={`lg:hidden absolute bottom-28 right-2 p-2 rounded-full shadow-md z-10 ${
-                    added ? 'bg-green-500' : 'bg-brand-terracotta'
-                } text-white`}
-            >
-                {added ? <Check size={16} /> : <ShoppingBag size={16} />}
-            </button>
-
-            {/* Content */}
-            <div className="p-4 text-center">
-                {/* Title */}
-                <Link to={`/product/${product.id}`}>
-                    <h3 className="text-xs md:text-sm font-sans tracking-wide text-brand-black hover:text-brand-terracotta transition-colors mb-2 line-clamp-2 min-h-[40px] uppercase">
-                        {product.name}
-                    </h3>
-                </Link>
-
-                {/* Reviews */}
-                <div className="flex justify-center items-center mb-3 space-x-1 opacity-60 hover:opacity-100 transition-opacity">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            size={10}
-                            className={i < Math.round(product.rating || 0) ? "fill-brand-yellow text-brand-yellow" : "text-gray-300"}
-                        />
-                    ))}
-                    <span className="text-[10px] text-gray-500 ml-1">({product.reviews || 0})</span>
-                </div>
-
-                {/* Price */}
-                <div className="flex justify-center items-baseline space-x-2">
-                    <span className="text-brand-green font-serif font-medium text-lg md:text-xl">₹{product.price}</span>
-                    {product.oldPrice && product.oldPrice > product.price && (
-                        <span className="text-gray-400 text-xs font-serif line-through decoration-brand-terracotta/50">₹{product.oldPrice}</span>
-                    )}
-                </div>
-            </div>
+  return (
+    <article className="group surface-card rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col min-w-0 h-full transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_20px_55px_rgba(30,58,47,.15)]">
+      <Link to={`/product/${product.id}`} className="relative block aspect-[4/5] overflow-hidden bg-[#eef2e7]">
+        <img
+          src={product.image || product.imageUrl || fallbackImage}
+          alt={product.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = fallbackImage; }}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/25 to-transparent" />
+        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 flex flex-col items-start gap-1.5">
+          {discount > 0 && <span className="rounded-full bg-brand-terracotta px-2.5 py-1 text-[10px] sm:text-xs font-bold text-white shadow">{discount}% OFF</span>}
+          {product.featured && <span className="rounded-full bg-brand-moss/90 px-2.5 py-1 text-[10px] font-semibold text-white">Bestseller</span>}
         </div>
-    );
-};
+        {product.stock === 0 && <span className="absolute inset-x-3 bottom-3 rounded-xl bg-white/95 py-2 text-center text-xs font-semibold text-red-600">Out of stock</span>}
+      </Link>
 
-export default ProductCard;
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <p className="mb-1 truncate text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-brand-sage">{product.category || 'Herbal care'}</p>
+        <Link to={`/product/${product.id}`} className="min-w-0">
+          <h3 className="line-clamp-2 min-h-[2.6rem] text-sm sm:text-base font-semibold leading-snug text-brand-black transition-colors group-hover:text-brand-terracotta">{product.name}</h3>
+        </Link>
+        {product.shortDescription && <p className="mt-1 hidden sm:block line-clamp-2 text-xs leading-relaxed text-gray-500">{product.shortDescription}</p>}
+
+        <div className="mt-2 flex items-center gap-1.5 text-xs">
+          <span className="inline-flex items-center gap-1 rounded-md bg-brand-moss px-1.5 py-1 font-bold text-white">
+            {Number(product.rating || 0).toFixed(1)} <Star size={11} className="fill-current" />
+          </span>
+          <span className="truncate text-gray-400">{product.reviews || 0} reviews</span>
+        </div>
+
+        <div className="mt-auto pt-3">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="text-lg sm:text-xl font-bold text-brand-moss">₹{price.toLocaleString('en-IN')}</span>
+            {oldPrice > price && <span className="text-xs text-gray-400 line-through">₹{oldPrice.toLocaleString('en-IN')}</span>}
+          </div>
+          {(product.weight || product.unit) && <p className="text-[10px] text-gray-400">{product.weight} {product.unit}</p>}
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={adding || product.stock === 0}
+            className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand-moss px-2 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-brand-terracotta disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {added ? <Check size={16} /> : <ShoppingCart size={16} />}
+            <span>{added ? 'Added' : product.stock === 0 ? 'Unavailable' : 'Add to cart'}</span>
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}

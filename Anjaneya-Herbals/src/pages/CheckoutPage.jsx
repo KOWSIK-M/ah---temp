@@ -97,6 +97,23 @@ const CheckoutPage = () => {
     country: "India",
     addressType: "home",
   });
+  const [addressErrors, setAddressErrors] = useState({});
+
+  const updateAddressField = (field, value) => {
+    setFormData((current) => ({ ...current, [field]: value }));
+    setAddressErrors((current) => ({ ...current, [field]: undefined }));
+  };
+
+  const addressInputClass = (field, compact = false) =>
+    `${compact ? 'px-3 py-2 text-sm' : 'px-4 py-2'} w-full rounded-lg border outline-none focus:ring-2 ${
+      addressErrors[field]
+        ? 'field-invalid focus:ring-red-200'
+        : 'border-gray-300 focus:border-transparent focus:ring-green-500'
+    }`;
+
+  const AddressError = ({ field }) => addressErrors[field]
+    ? <p className="field-error" role="alert">{addressErrors[field]}</p>
+    : null;
 
   useEffect(() => {
     if (user) {
@@ -134,33 +151,16 @@ const CheckoutPage = () => {
   const calculateTotal = () => Number(quote?.totalAmount ?? 0);
 
   const validateAddressForm = () => {
-    const required = [
-      "firstName",
-      "lastName",
-      "email",
-      "phone",
-      "address",
-      "city",
-      "state",
-      "pincode",
-    ];
-    for (const field of required) {
-      if (!formData[field]?.trim()) {
-        showToastMessage(
-          `Please fill in ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`
-        );
-        return false;
-      }
-    }
-    if (!/^\d{10}$/.test(formData.phone)) {
-      showToastMessage("Please enter a valid 10-digit phone number");
-      return false;
-    }
-    if (!/^\d{6}$/.test(formData.pincode)) {
-      showToastMessage("Please enter a valid 6-digit pincode");
-      return false;
-    }
-    return true;
+    const labels = { firstName: 'First name', lastName: 'Last name', email: 'Email', phone: 'Phone', address: 'Address', city: 'City', state: 'State', pincode: 'Pincode' };
+    const nextErrors = {};
+    Object.entries(labels).forEach(([field, label]) => {
+      if (!formData[field]?.trim()) nextErrors[field] = `${label} is required`;
+    });
+    if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) nextErrors.email = 'Enter a valid email address';
+    if (formData.phone?.trim() && !/^\d{10}$/.test(formData.phone)) nextErrors.phone = 'Enter a valid 10-digit phone number';
+    if (formData.pincode?.trim() && !/^\d{6}$/.test(formData.pincode)) nextErrors.pincode = 'Enter a valid 6-digit pincode';
+    setAddressErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleAddressSubmit = async () => {
@@ -546,7 +546,7 @@ const CheckoutPage = () => {
                   </button>
                 </div>
 
-                {isAddingNewAddress ? (
+                {(isAddingNewAddress || addresses.length === 0) ? (
                   <div className="space-y-4">
                     {/* Address Type */}
                     <div>
@@ -575,7 +575,7 @@ const CheckoutPage = () => {
                     </div>
 
                     {/* Personal Details */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           First Name *
@@ -583,15 +583,11 @@ const CheckoutPage = () => {
                         <input
                           type="text"
                           value={formData.firstName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              firstName: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                          onChange={(e) => updateAddressField('firstName', e.target.value)}
+                          className={addressInputClass('firstName', true)}
                           required
                         />
+                        <AddressError field="firstName" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -600,15 +596,11 @@ const CheckoutPage = () => {
                         <input
                           type="text"
                           value={formData.lastName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              lastName: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                          onChange={(e) => updateAddressField('lastName', e.target.value)}
+                          className={addressInputClass('lastName', true)}
                           required
                         />
+                        <AddressError field="lastName" />
                       </div>
                     </div>
 
@@ -619,12 +611,11 @@ const CheckoutPage = () => {
                       <input
                         type="email"
                         value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => updateAddressField('email', e.target.value)}
+                        className={addressInputClass('email', true)}
                         required
                       />
+                      <AddressError field="email" />
                     </div>
 
                     <div>
@@ -634,12 +625,11 @@ const CheckoutPage = () => {
                       <input
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
-                        }
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => updateAddressField('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        className={addressInputClass('phone', true)}
                         required
                       />
+                      <AddressError field="phone" />
                     </div>
 
                     <div>
@@ -648,16 +638,15 @@ const CheckoutPage = () => {
                       </label>
                       <textarea
                         value={formData.address}
-                        onChange={(e) =>
-                          setFormData({ ...formData, address: e.target.value })
-                        }
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => updateAddressField('address', e.target.value)}
+                        className={addressInputClass('address', true)}
                         rows="2"
                         required
                       />
+                      <AddressError field="address" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           City *
@@ -665,12 +654,11 @@ const CheckoutPage = () => {
                         <input
                           type="text"
                           value={formData.city}
-                          onChange={(e) =>
-                            setFormData({ ...formData, city: e.target.value })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                          onChange={(e) => updateAddressField('city', e.target.value)}
+                          className={addressInputClass('city', true)}
                           required
                         />
+                        <AddressError field="city" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -679,12 +667,11 @@ const CheckoutPage = () => {
                         <input
                           type="text"
                           value={formData.state}
-                          onChange={(e) =>
-                            setFormData({ ...formData, state: e.target.value })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                          onChange={(e) => updateAddressField('state', e.target.value)}
+                          className={addressInputClass('state', true)}
                           required
                         />
+                        <AddressError field="state" />
                       </div>
                     </div>
 
@@ -695,12 +682,11 @@ const CheckoutPage = () => {
                       <input
                         type="text"
                         value={formData.pincode}
-                        onChange={(e) =>
-                          setFormData({ ...formData, pincode: e.target.value })
-                        }
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                        onChange={(e) => updateAddressField('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className={addressInputClass('pincode', true)}
                         required
                       />
+                      <AddressError field="pincode" />
                     </div>
 
                     <button
@@ -1066,18 +1052,20 @@ const CheckoutPage = () => {
                             <input
                               type="text"
                               value={formData.firstName}
-                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('firstName', e.target.value)}
+                              className={addressInputClass('firstName')}
                             />
+                            <AddressError field="firstName" />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                             <input
                               type="text"
                               value={formData.lastName}
-                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('lastName', e.target.value)}
+                              className={addressInputClass('lastName')}
                             />
+                            <AddressError field="lastName" />
                           </div>
                         </div>
 
@@ -1088,18 +1076,20 @@ const CheckoutPage = () => {
                             <input
                               type="email"
                               value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('email', e.target.value)}
+                              className={addressInputClass('email')}
                             />
+                            <AddressError field="email" />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
                             <input
                               type="tel"
                               value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                              className={addressInputClass('phone')}
                             />
+                            <AddressError field="phone" />
                           </div>
                         </div>
 
@@ -1108,10 +1098,11 @@ const CheckoutPage = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
                           <textarea
                             value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            onChange={(e) => updateAddressField('address', e.target.value)}
+                            className={addressInputClass('address')}
                             rows="2"
                           />
+                          <AddressError field="address" />
                         </div>
 
                         {/* City, State, Pincode */}
@@ -1121,27 +1112,30 @@ const CheckoutPage = () => {
                             <input
                               type="text"
                               value={formData.city}
-                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('city', e.target.value)}
+                              className={addressInputClass('city')}
                             />
+                            <AddressError field="city" />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
                             <input
                               type="text"
                               value={formData.state}
-                              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('state', e.target.value)}
+                              className={addressInputClass('state')}
                             />
+                            <AddressError field="state" />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
                             <input
                               type="text"
                               value={formData.pincode}
-                              onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              onChange={(e) => updateAddressField('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                              className={addressInputClass('pincode')}
                             />
+                            <AddressError field="pincode" />
                           </div>
                         </div>
 

@@ -23,7 +23,7 @@ const AdminLoginPage = () => {
             }
 
             if (response.user?.role !== 'ADMIN') {
-                await logout();
+                await logout({ notify: false, redirect: false });
                 setError('Access denied. Admin privileges required.');
                 return;
             }

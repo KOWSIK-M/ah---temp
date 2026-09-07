@@ -34,7 +34,11 @@ public class AhApplication {
 						} else if (value.startsWith("'") && value.endsWith("'")) {
 							value = value.substring(1, value.length() - 1);
 						}
-						System.setProperty(key, value);
+						// Explicit JVM arguments and process environment variables must win.
+						// This keeps a production .env file from overriding local/test commands.
+						if (System.getProperty(key) == null && System.getenv(key) == null) {
+							System.setProperty(key, value);
+						}
 					}
 				}
 				System.out.println("Loaded .env file successfully");

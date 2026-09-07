@@ -24,7 +24,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private record EndpointLimit(String pathSuffix, int maxRequests) {}
 
     private static final EndpointLimit[] LIMITS = {
-        new EndpointLimit("/api/auth/login",    5),
+        new EndpointLimit("/api/auth/login",   12),
         new EndpointLimit("/api/auth/forgot-password", 3),
         new EndpointLimit("/api/auth/reset-password", 5),
         new EndpointLimit("/api/newsletter", 3),
@@ -48,6 +48,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 if (isRateLimited(key, limit.maxRequests())) {
                     response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.setHeader("Retry-After", "60");
                     response.getWriter().write(
                         "{\"message\":\"Too many requests. Please try again later.\"}");
                     return;

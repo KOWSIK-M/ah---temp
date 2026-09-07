@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,11 +21,6 @@ const Navbar = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
-
-    useEffect(() => {
-        // Close mobile menu on route change
-        setIsMenuOpen(false);
-    }, [location.pathname]);
 
     const menuItems = [
         { label: 'HOME', href: '/' },
@@ -50,8 +44,6 @@ const Navbar = () => {
     const handleLogout = () => {
         logout();
         setIsDropdownOpen(false);
-        toast.success('Logged out successfully');
-        navigate('/');
     };
 
     const handleProductClick = (e, href) => {
@@ -70,7 +62,7 @@ const Navbar = () => {
     };
 
     return (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'glass-effect py-3' : 'bg-transparent py-5'}`}>
+        <nav className={`fixed top-0 w-full z-50 border-b transition-all duration-300 ${scrolled ? 'bg-brand-cream/95 backdrop-blur-xl border-brand-sage/30 shadow-lg py-2' : 'bg-brand-cream/90 backdrop-blur-md border-brand-sage/20 py-2.5 sm:py-3'}`}>
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
@@ -84,35 +76,24 @@ const Navbar = () => {
                             animate={{ x: 0, opacity: 1 }}
                             className="flex items-center space-x-3"
                         >
-                            <div className="relative">
-                                <div className="w-12 h-12 bg-gradient-to-br from-brand-moss to-brand-sage rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
+                            <div className="relative flex-shrink-0">
+                                <div className="flex h-10 w-14 items-center justify-center sm:h-12 sm:w-16">
                                     <img
-                                        src="/logo.jpg"
+                                        src="/logo-transparent.png"
                                         alt="Anjaneya Herbals Logo"
-                                        className="w-full h-full object-cover"
+                                        className="h-full w-full object-contain drop-shadow-sm"
                                         onError={(e) => {
                                             e.target.onerror = null;
                                             e.target.src = "https://via.placeholder.com/48x48/5C7A59/FFFFFF?text=AH";
                                         }}
                                     />
                                 </div>
-                                <motion.div
-                                    animate={{
-                                        rotate: 360,
-                                    }}
-                                    transition={{
-                                        duration: 20,
-                                        repeat: Infinity,
-                                        ease: "linear"
-                                    }}
-                                    className="absolute -inset-1 bg-gradient-to-r from-brand-terracotta/20 to-brand-sage/20 rounded-full blur"
-                                />
                             </div>
-                            <div className="flex flex-col">
-                                <h1 className="text-xl font-serif font-bold text-brand-earth group-hover:text-brand-terracotta transition-colors">
+                            <div className="flex flex-col min-w-0">
+                                <h1 className="text-base sm:text-xl font-serif font-bold text-brand-earth group-hover:text-brand-terracotta transition-colors whitespace-nowrap">
                                     Anjaneya Herbals
                                 </h1>
-                                <span className="text-xs text-brand-sage font-medium tracking-widest">
+                                <span className="hidden min-[380px]:block text-[9px] sm:text-xs text-brand-sage font-medium tracking-[0.16em] whitespace-nowrap">
                                     Pure • Traditional • Natural
                                 </span>
                             </div>

@@ -169,8 +169,8 @@ Status: ${order.status}
   const items = order.items || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-4 pb-24 lg:pt-20 lg:pb-8">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="botanical-section min-h-screen pt-20 pb-24 lg:pt-24 lg:pb-8">
+      <div className="mx-auto w-full max-w-5xl px-3 sm:px-5">
         {/* Header */}
         <div className="mb-6">
           <button
@@ -186,7 +186,7 @@ Status: ${order.status}
               <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
               <p className="text-gray-600">Order #{order.id}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={downloadInvoice}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -209,15 +209,15 @@ Status: ${order.status}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-sm p-6 mb-6"
+          className="surface-card min-w-0 overflow-hidden rounded-2xl p-4 sm:p-6 mb-6"
         >
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4 mb-4">
             {getStatusIcon(order.status)}
-            <div>
+            <div className="min-w-0">
               <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
                 {(order.status || "PENDING").toUpperCase()}
               </span>
-              <p className="text-gray-600 mt-1">{getStatusMessage(order.status)}</p>
+              <p className="break-words text-sm sm:text-base text-gray-600 mt-1">{getStatusMessage(order.status)}</p>
             </div>
           </div>
           
@@ -257,12 +257,12 @@ Status: ${order.status}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6"
+            className="lg:col-span-2 surface-card min-w-0 overflow-hidden rounded-2xl p-4 sm:p-6"
           >
             <h2 className="text-lg font-bold text-gray-900 mb-4">Order Items</h2>
             <div className="space-y-4">
               {items.map((item, index) => (
-                <div key={index} className="flex items-center gap-4 pb-4 border-b last:border-0 last:pb-0">
+                <div key={index} className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] sm:grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-3 sm:gap-4 pb-4 border-b last:border-0 last:pb-0">
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     <img
                       src={item.productImageUrl || "/placeholder.jpg"}
@@ -273,14 +273,14 @@ Status: ${order.status}
                   <div className="flex-1 min-w-0">
                     <Link
                       to={`/product/${item.productId}`}
-                      className="font-medium text-gray-900 hover:text-green-600 block truncate"
+                      className="font-medium text-gray-900 hover:text-green-600 block break-words"
                     >
                       {item.productName || "Product"}
                     </Link>
                     <p className="text-sm text-gray-500">Qty: {item.quantity || 1}</p>
                     <p className="text-sm text-gray-500">₹{item.priceAtPurchase || 0} each</p>
                   </div>
-                  <div className="text-right">
+                  <div className="col-start-2 sm:col-start-auto text-left sm:text-right">
                     <p className="font-bold text-gray-900">
                       ₹{((item.priceAtPurchase || 0) * (item.quantity || 1)).toLocaleString()}
                     </p>
@@ -294,7 +294,7 @@ Status: ${order.status}
             <div className="mt-6 pt-4 border-t space-y-2">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>₹{order.items.reduce((sum,item)=>sum+Number(item.priceAtPurchase)*item.quantity,0).toLocaleString()}</span>
+                <span>₹{items.reduce((sum,item)=>sum+Number(item.priceAtPurchase)*item.quantity,0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Delivery</span>
@@ -314,20 +314,20 @@ Status: ${order.status}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-sm p-6"
+            className="surface-card min-w-0 overflow-hidden rounded-2xl p-4 sm:p-6"
           >
             <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping Address</h2>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <MapPin size={18} className="text-gray-400 mt-1 flex-shrink-0" />
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-gray-900">
                     {shippingAddress.firstName} {shippingAddress.lastName}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="break-words text-gray-600 text-sm">
                     {shippingAddress.addressLine1 || shippingAddress.address}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="break-words text-gray-600 text-sm">
                     {shippingAddress.city}, {shippingAddress.state} - {shippingAddress.pincode}
                   </p>
                 </div>
@@ -343,7 +343,7 @@ Status: ${order.status}
               {shippingAddress.email && (
                 <div className="flex items-center gap-3">
                   <Mail size={18} className="text-gray-400 flex-shrink-0" />
-                  <p className="text-gray-600 text-sm">{shippingAddress.email}</p>
+                  <p className="break-all text-gray-600 text-sm">{shippingAddress.email}</p>
                 </div>
               )}
             </div>

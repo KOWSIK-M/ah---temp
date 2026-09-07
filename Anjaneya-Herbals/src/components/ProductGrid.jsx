@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { productsApi, categoriesApi } from '../services/api';
+import { Link } from 'react-router-dom';
 
 const ProductGrid = ({ title = "Best Sellers", categoryId }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [categoryName, setCategoryName] = useState(title);
 
     useEffect(() => {
@@ -46,7 +46,6 @@ const ProductGrid = ({ title = "Best Sellers", categoryId }) => {
                 setProducts(productList);
             } catch (err) {
                 console.error('Error fetching products:', err);
-                setError(err.message);
                 setProducts([]);
             } finally {
                 setLoading(false);
@@ -100,30 +99,36 @@ const ProductGrid = ({ title = "Best Sellers", categoryId }) => {
         rating: p.rating,
         reviews: p.reviewCount,
         sale: p.onSale,
-        category: p.categoryName
+        category: p.categoryName,
+        shortDescription: p.shortDescription,
+        stock: p.stock,
+        featured: p.featured,
+        weight: p.weight,
+        unit: p.unit
     }));
 
     return (
-        <section className="py-12 bg-brand-cream">
+        <section className="botanical-section py-12 sm:py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-10">
-                    <h2 className="text-3xl font-serif font-bold text-brand-black mb-3">{categoryId ? categoryName : title}</h2>
+                <div className="text-center mb-8 sm:mb-10">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-terracotta">Rooted in nature</p>
+                    <h2 className="text-3xl sm:text-4xl font-serif font-bold text-brand-black mt-2 mb-3">{categoryId ? categoryName : title}</h2>
                     <div className="w-20 h-1 bg-brand-yellow mx-auto rounded-full"></div>
                     <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
                         Explore our top-rated natural products curated just for your wellness journey.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-7">
                     {mappedProducts.map(product => (
                         <ProductCard key={product.id} product={product} />
                     ))}
                 </div>
 
                 <div className="mt-10 text-center">
-                    <button className="btn-secondary">
+                    <Link to="/products" className="btn-secondary inline-flex items-center justify-center min-h-11">
                         View All Products
-                    </button>
+                    </Link>
                 </div>
             </div>
         </section>

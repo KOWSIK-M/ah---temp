@@ -25,7 +25,7 @@ const StoreLocator = () => {
     const [selectedBranch, setSelectedBranch] = useState(BRANCHES[0]);
 
     return (
-        <section className="py-16 bg-brand-cream">
+        <section className="botanical-section py-12 sm:py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-serif font-bold text-brand-black mb-3">Visit Our Stores</h2>
@@ -35,9 +35,9 @@ const StoreLocator = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-2xl overflow-hidden shadow-xl bg-white">
+                <div className="surface-card grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden">
                     {/* Map Interface - Real Time Embed */}
-                    <div className="relative h-[400px] lg:h-auto bg-gray-200 overflow-hidden">
+                    <div className="relative h-[280px] sm:h-[380px] lg:h-auto min-h-[320px] bg-gray-200 overflow-hidden">
                         <iframe
                             src={selectedBranch.mapUrl}
                             width="100%"

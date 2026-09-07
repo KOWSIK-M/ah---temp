@@ -41,8 +41,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const handleSessionExpired = () => {
-    logout();
-    toast.error("Session expired. Please login again.");
+    logout({ notify: false });
+    toast.error("Session expired. Please login again.", { id: "session-expired" });
   };
 
   const syncAuthenticatedUser = async (fallbackUser = null) => {
@@ -94,10 +94,10 @@ export const AuthProvider = ({ children }) => {
       const data = await authApi.login(email, password);
       await syncAuthenticatedUser(data?.user ?? null);
       window.dispatchEvent(new Event("authChange"));
-      toast.success("Login successful!");
+      toast.success("Login successful!", { id: "auth-login" });
       return data;
     } catch (error) {
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || "Login failed", { id: "auth-login" });
       return false;
     }
   };
@@ -107,40 +107,39 @@ export const AuthProvider = ({ children }) => {
       const data = await authApi.register(userData);
       await syncAuthenticatedUser(data?.user ?? null);
       window.dispatchEvent(new Event("authChange"));
-      toast.success("Registration successful!");
+      toast.success("Registration successful!", { id: "auth-register" });
       return data;
     } catch (error) {
-      toast.error(error.message || "Registration failed");
+      toast.error(error.message || "Registration failed", { id: "auth-register" });
       return false;
     }
   };
 
-  const logout = () => {
-    // Optimistic UI update
+  const logout = async ({ notify = true, redirect = true } = {}) => {
     const cleanup = () => {
       setUser(null);
       localStorage.removeItem("user");
-      navigate("/");
-      toast.success("Logged out successfully");
+      if (redirect) navigate("/");
+      if (notify) toast.success("Logged out successfully", { id: "auth-logout" });
     };
 
-    authApi
-      .logout()
-      .then(cleanup)
-      .catch((err) => {
-        console.error("Logout API failed:", err);
-        cleanup();
-      });
+    try {
+      await authApi.logout();
+    } catch {
+      console.error("Logout API failed:", error);
+    } finally {
+      cleanup();
+    }
   };
 
   const updateProfile = async (data) => {
     try {
       const updatedUser = await userApi.updateProfile(data);
       setUser(updatedUser);
-      toast.success("Profile updated");
+      toast.success("Profile updated", { id: "profile-update" });
       return true;
     } catch (error) {
-      toast.error(error.message || "Update failed");
+      toast.error(error.message || "Update failed", { id: "profile-update" });
       return false;
     }
   };
