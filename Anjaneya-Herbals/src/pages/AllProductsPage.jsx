@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { productsApi, categoriesApi } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { 
@@ -11,6 +11,7 @@ import {
 const AllProductsPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { categoryId: categoryParam } = useParams();
     
     // State
     const [products, setProducts] = useState([]);
@@ -33,6 +34,25 @@ const AllProductsPage = () => {
     useEffect(() => {
         fetchCategories();
     }, []);
+
+    // Category URLs use readable slugs, while the products API expects a numeric ID.
+    // Resolve the route after categories load and keep it in sync during client-side navigation.
+    useEffect(() => {
+        if (categories.length === 0) return;
+
+        const requestedCategory = categoryParam || location.state?.category;
+        if (!requestedCategory) {
+            setSelectedCategory('ALL');
+            return;
+        }
+
+        const normalized = decodeURIComponent(String(requestedCategory)).toLowerCase();
+        const match = categories.find((category) =>
+            String(category.id) === normalized || category.slug.toLowerCase() === normalized
+        );
+        setSelectedCategory(match?.id ?? 'ALL');
+        setPage(0);
+    }, [categories, categoryParam, location.state?.category]);
 
     // Fetch Products with debounce
     const fetchProducts = useCallback(async () => {
@@ -126,6 +146,14 @@ const AllProductsPage = () => {
         setSortBy('newest');
         setSearchTerm('');
         setPage(0);
+        if (categoryParam) navigate('/products', { replace: true });
+    };
+
+    const selectCategory = (category) => {
+        setSelectedCategory(category?.id ?? 'ALL');
+        setPage(0);
+        setShowMobileFilters(false);
+        navigate(category ? `/category/${category.slug}` : '/products');
     };
 
     // Calculate active filter count
@@ -179,7 +207,7 @@ const AllProductsPage = () => {
                                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Categories</h3>
                                 <div className="space-y-2">
                                     <button
-                                        onClick={() => setSelectedCategory('ALL')}
+                                        onClick={() => selectCategory(null)}
                                         className={`w-full text-left px-3 py-2 rounded-lg transition-all ${selectedCategory === 'ALL' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
                                     >
                                         All Products
@@ -187,7 +215,7 @@ const AllProductsPage = () => {
                                     {categories.map(cat => (
                                         <button
                                             key={cat.id}
-                                            onClick={() => setSelectedCategory(cat.id)}
+                                            onClick={() => selectCategory(cat)}
                                             className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center justify-between ${selectedCategory === cat.id ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
                                         >
                                             <span>{cat.name}</span>
@@ -411,7 +439,7 @@ const AllProductsPage = () => {
                                         {selectedCategory !== 'ALL' && (
                                             <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm">
                                                 {categories.find(c => c.id === selectedCategory)?.name}
-                                                <button onClick={() => setSelectedCategory('ALL')}>
+                                                <button onClick={() => selectCategory(null)}>
                                                     <X size={14} />
                                                 </button>
                                             </span>
@@ -493,7 +521,7 @@ const AllProductsPage = () => {
                                                 {categories.map(cat => (
                                                     <button
                                                         key={cat.id}
-                                                        onClick={() => setSelectedCategory(cat.id)}
+                                                        onClick={() => selectCategory(cat)}
                                                         className={`w-full text-left px-4 py-3 rounded-xl transition-all ${selectedCategory === cat.id ? 'bg-green-50 text-green-700 font-medium border border-green-200' : 'text-gray-600 hover:bg-gray-50 border border-transparent'}`}
                                                     >
                                                         {cat.name}
