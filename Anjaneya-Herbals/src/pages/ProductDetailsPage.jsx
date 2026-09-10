@@ -9,6 +9,11 @@ import { productsApi, wishlistApi } from '../services/api';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import ProductReviews from '../components/ProductReviews';
+import ProductImageGallery from '../components/ProductImageGallery';
+import DeliveryEstimate from '../components/DeliveryEstimate';
+import SimilarProducts from '../components/SimilarProducts';
+import RecentlyViewed from '../components/RecentlyViewed';
+import { rememberProduct } from '../utils/recentlyViewed';
 
 const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23eef2e7'/%3E%3Cpath d='M370 215c100 41 121 146 22 222-72-75-82-154-22-222Zm-12 231c-44-78-112-101-185-65 32 90 101 115 185 65Z' fill='%239CAF88'/%3E%3Ctext x='50%25' y='72%25' text-anchor='middle' font-family='Arial' font-size='34' fill='%23315b45'%3EAnjaneya Herbals%3C/text%3E%3C/svg%3E";
 
@@ -20,7 +25,6 @@ export default function ProductDetailsPage() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [imageIndex, setImageIndex] = useState(0);
   const [wishlisted, setWishlisted] = useState(false);
   const [adding, setAdding] = useState(false);
   const [openSection, setOpenSection] = useState('details');
@@ -28,6 +32,8 @@ export default function ProductDetailsPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
     setLoading(true);
+    setQuantity(1);
+    setOpenSection('details');
     productsApi.getById(productId)
       .then(setProduct)
       .catch(() => setProduct(null))
@@ -40,6 +46,10 @@ export default function ProductDetailsPage() {
       .then((items) => setWishlisted(items.some((item) => String(item.id) === String(productId))))
       .catch(() => setWishlisted(false));
   }, [isAuthenticated, productId]);
+
+  useEffect(() => {
+    if (product) rememberProduct(product);
+  }, [product]);
 
   const images = useMemo(() => {
     if (!product) return [];
@@ -131,19 +141,7 @@ export default function ProductDetailsPage() {
 
         <section className="surface-card grid min-w-0 overflow-hidden rounded-3xl lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
           <div className="min-w-0 bg-[#eef2e7]/70 p-3 sm:p-6 lg:p-8">
-            <div className="relative mx-auto aspect-square max-w-[620px] overflow-hidden rounded-2xl bg-white">
-              <img src={images[imageIndex]} alt={product.name} className="h-full w-full object-contain p-3 sm:p-8" />
-              {discount > 0 && <span className="absolute left-3 top-3 rounded-full bg-brand-terracotta px-3 py-1.5 text-xs font-bold text-white">{discount}% OFF</span>}
-            </div>
-            {images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {images.map((image, index) => (
-                  <button key={image} onClick={() => setImageIndex(index)} className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-white ${imageIndex === index ? 'border-brand-moss' : 'border-transparent'}`}>
-                    <img src={image} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ProductImageGallery key={product.id} images={images} productName={product.name} discount={discount} />
           </div>
 
           <div className="min-w-0 p-5 sm:p-8 lg:p-10">
@@ -160,7 +158,7 @@ export default function ProductDetailsPage() {
 
             <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
               <span className="inline-flex items-center gap-1 rounded-lg bg-brand-moss px-2 py-1 font-bold text-white">{Number(product.rating || 0).toFixed(1)} <Star size={13} className="fill-current" /></span>
-              <button onClick={() => setOpenSection('reviews')} className="text-gray-500 underline-offset-4 hover:underline">{product.reviewCount || 0} customer reviews</button>
+              <button onClick={() => { setOpenSection('reviews'); document.getElementById('product-information')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }} className="text-gray-500 underline-offset-4 hover:underline">{product.reviewCount || 0} customer reviews</button>
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${stock > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>{stock > 0 ? `${stock} in stock` : 'Out of stock'}</span>
             </div>
 
@@ -168,6 +166,7 @@ export default function ProductDetailsPage() {
               <span className="text-3xl font-bold text-brand-moss">₹{price.toLocaleString('en-IN')}</span>
               {oldPrice > price && <span className="text-base text-gray-400 line-through">₹{oldPrice.toLocaleString('en-IN')}</span>}
               <span className="text-xs text-gray-500">Inclusive of taxes</span>
+              {discount > 0 && <span className="w-full text-sm font-semibold text-green-700">You save ₹{(oldPrice - price).toLocaleString('en-IN')} ({discount}%)</span>}
             </div>
 
             <p className="mt-5 break-words text-sm sm:text-base leading-7 text-gray-600">{product.shortDescription || product.description}</p>
@@ -176,11 +175,11 @@ export default function ProductDetailsPage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <div className="flex h-12 items-center rounded-xl border border-brand-sage/40 bg-white">
-                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="h-full px-3" aria-label="Decrease quantity"><Minus size={16} /></button>
+                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1 || adding} className="h-full px-3 disabled:opacity-30" aria-label="Decrease quantity"><Minus size={16} /></button>
                 <span className="w-9 text-center font-semibold">{quantity}</span>
-                <button onClick={() => setQuantity((q) => Math.min(stock || 1, q + 1))} className="h-full px-3" aria-label="Increase quantity"><Plus size={16} /></button>
+                <button onClick={() => setQuantity((q) => Math.min(stock || 1, q + 1))} disabled={quantity >= stock || adding} className="h-full px-3 disabled:opacity-30" aria-label="Increase quantity"><Plus size={16} /></button>
               </div>
-              <button onClick={() => addItem(false)} disabled={adding || stock === 0} className="flex h-12 min-w-[150px] flex-1 items-center justify-center gap-2 rounded-xl bg-brand-moss px-5 font-semibold text-white hover:bg-brand-terracotta disabled:opacity-50"><ShoppingBag size={18} /> Add to cart</button>
+              <button onClick={() => addItem(false)} disabled={adding || stock === 0} className="flex h-12 min-w-[150px] flex-1 items-center justify-center gap-2 rounded-xl bg-brand-moss px-5 font-semibold text-white hover:bg-brand-terracotta disabled:opacity-50"><ShoppingBag size={18} /> {adding ? 'Adding…' : stock === 0 ? 'Out of stock' : 'Add to cart'}</button>
               <button onClick={() => addItem(true)} disabled={adding || stock === 0} className="h-12 w-full rounded-xl border-2 border-brand-moss px-6 font-semibold text-brand-moss hover:bg-brand-moss hover:text-white sm:w-auto">Buy now</button>
             </div>
 
@@ -189,13 +188,14 @@ export default function ProductDetailsPage() {
                 <div key={title} className="rounded-2xl bg-brand-cream p-3 text-center"><Icon className="mx-auto text-brand-moss" size={20} /><p className="mt-1 text-xs font-bold">{title}</p><p className="hidden sm:block text-[10px] text-gray-500">{text}</p></div>
               ))}
             </div>
+            <DeliveryEstimate />
           </div>
         </section>
 
-        <section className="surface-card mt-6 min-w-0 rounded-3xl p-4 sm:p-7">
+        <section id="product-information" className="scroll-mt-28 surface-card mt-6 min-w-0 rounded-3xl p-4 sm:p-7">
           <div className="grid grid-cols-2 gap-2 sm:flex">
             {[['details', 'Product details'], ['ingredients', 'Ingredients'], ['usage', 'How to use'], ['reviews', 'Reviews']].map(([id, label]) => (
-              <button key={id} onClick={() => setOpenSection(id)} className={`rounded-xl px-3 py-2 text-xs font-semibold sm:flex-shrink-0 sm:rounded-full sm:px-4 sm:text-sm ${openSection === id ? 'bg-brand-moss text-white' : 'bg-brand-cream text-brand-black'}`}>{label}</button>
+              <button key={id} aria-pressed={openSection === id} onClick={() => setOpenSection(id)} className={`rounded-xl px-3 py-2 text-xs font-semibold sm:flex-shrink-0 sm:rounded-full sm:px-4 sm:text-sm ${openSection === id ? 'bg-brand-moss text-white' : 'bg-brand-cream text-brand-black'}`}>{label}</button>
             ))}
           </div>
           <div className="mt-5 min-w-0 break-words text-sm sm:text-base leading-7 text-gray-600">
@@ -205,6 +205,9 @@ export default function ProductDetailsPage() {
             {openSection === 'reviews' && <ProductReviews productId={product.id} />}
           </div>
         </section>
+
+        <SimilarProducts productId={product.id} categoryId={product.categoryId} />
+        <RecentlyViewed currentProductId={product.id} />
       </div>
     </main>
   );

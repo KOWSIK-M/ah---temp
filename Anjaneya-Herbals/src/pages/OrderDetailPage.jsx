@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ordersApi } from "../services/api";
 import toast from "react-hot-toast";
+import { downloadInvoicePdf } from "../utils/invoice";
 
 const OrderDetailPage = () => {
   const { orderId } = useParams();
@@ -29,11 +30,7 @@ const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadOrder();
-  }, [orderId]);
-
-  const loadOrder = async () => {
+  const loadOrder = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -46,7 +43,7 @@ const OrderDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
 
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
@@ -96,33 +93,19 @@ const OrderDetailPage = () => {
     }
   };
 
-  const downloadInvoice = () => {
+  const downloadInvoice = async () => {
     if (!order) return;
-    
-    const invoice = `
-INVOICE
-Order ID: ${order.id}
-Date: ${new Date(order.createdAt).toLocaleDateString()}
-
-Items:
-${(order.items || [])
-  .map((item) => `- ${item.productName || 'Product'} x${item.quantity}: ₹${(item.priceAtPurchase || 0) * item.quantity}`)
-  .join("\n")}
-
-Subtotal: ₹${order.totalAmount || 0}
-Total: ₹${order.totalAmount || 0}
-Payment: ${order.paymentStatus || 'COD'}
-Status: ${order.status}
-    `;
-
-    const blob = new Blob([invoice], { type: "text/plain" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `invoice-${order.id}.txt`;
-    a.click();
-    toast.success("Invoice downloaded");
+    try {
+      await downloadInvoicePdf(order);
+      toast.success("PDF invoice downloaded", { id: `invoice-${order.id}` });
+    } catch {
+      toast.error("Could not generate the invoice", { id: `invoice-${order.id}` });
+    }
   };
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
 
   if (loading) {
     return (
@@ -192,7 +175,7 @@ Status: ${order.status}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 <Download size={18} />
-                <span>Invoice</span>
+                <span>Download invoice</span>
               </button>
               <Link
                 to={`/track-order/${order.id}`}

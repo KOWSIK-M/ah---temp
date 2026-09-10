@@ -37,7 +37,7 @@ const Navbar = () => {
         },
         { label: 'SPICES', href: '/category/spices' },
         { label: 'HERBAL POWDERS', href: '/category/herbal-powders' },
-        { label: 'ABOUT', href: '/#about' },
+        { label: 'ABOUT', href: '/about' },
         { label: 'CONTACT', href: '/contact' },
     ];
 

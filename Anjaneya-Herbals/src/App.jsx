@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 // Context Providers
@@ -12,6 +12,7 @@ import PasswordRecoveryPage from './pages/PasswordRecoveryPage';
 import InformationPage from './pages/InformationPage';
 import StoresPage from './pages/StoresPage';
 import ContactPage from './pages/ContactPage';
+import AboutPage from './pages/AboutPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -44,6 +45,7 @@ import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 import ChatWidget from './components/ChatWidget';
 
 function App() {
+  const location = useLocation();
   return (
     <AuthProvider>
       <CartProvider>
@@ -73,6 +75,7 @@ function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/stores" element={<StoresPage />} />
                     <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/about" element={<AboutPage />} />
                     <Route path="/product/:productId" element={<ProductDetailsPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/category/:categoryId" element={<AllProductsPage />} />
@@ -121,7 +124,7 @@ function App() {
                     error: { duration: 4000, style: { border: '1px solid #B3543D' }, iconTheme: { primary: '#B3543D', secondary: '#fff' } },
                   }}
                 />
-                <ChatWidget />
+                {location.pathname === '/' && <ChatWidget />}
               </div>
             } />
           </Routes>

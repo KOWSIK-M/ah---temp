@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminApi } from '../../services/api';
 import {
@@ -34,6 +33,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { downloadInvoicePdf } from '../../utils/invoice';
 
 const ORDER_STATUSES = [
   { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: <Clock size={14} /> },
@@ -46,7 +46,6 @@ const ORDER_STATUSES = [
 ];
 
 const AdminOrdersPage = () => {
-    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
@@ -79,12 +78,7 @@ const AdminOrdersPage = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    useEffect(() => {
-        fetchOrders();
-        fetchOrderStats();
-    }, [page, statusFilter, dateFilter, debouncedSearchTerm]);
-
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         try {
             setLoading(true);
             const params = {
@@ -104,9 +98,9 @@ const AdminOrdersPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, statusFilter, dateFilter, debouncedSearchTerm]);
 
-    const fetchOrderStats = async () => {
+    const fetchOrderStats = useCallback(async () => {
         try {
             const data = await adminApi.getOrderStats({
                 status: statusFilter !== 'ALL' ? statusFilter : undefined,
@@ -116,7 +110,12 @@ const AdminOrdersPage = () => {
         } catch (err) {
             console.error('Failed to fetch stats:', err);
         }
-    };
+    }, [statusFilter, dateFilter]);
+
+    useEffect(() => {
+        fetchOrders();
+        fetchOrderStats();
+    }, [fetchOrders, fetchOrderStats]);
 
     const handleStatusChange = async (orderId, newStatus) => {
         try {
@@ -126,7 +125,7 @@ const AdminOrdersPage = () => {
             if (showOrderDetails) {
                 setShowOrderDetails(false);
             }
-        } catch (err) {
+        } catch {
             alert('Failed to update order status');
         }
     };
@@ -327,6 +326,15 @@ const AdminOrdersPage = () => {
         printWindow.print();
     };
 
+    const downloadSelectedInvoice = async () => {
+        if (!selectedOrder) return;
+        try {
+            await downloadInvoicePdf(selectedOrder);
+        } catch {
+            alert('Failed to generate invoice PDF.');
+        }
+    };
+
     const viewOrderDetails = (order) => {
         setSelectedOrder(order);
         setShowOrderDetails(true);
@@ -342,11 +350,11 @@ const AdminOrdersPage = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={printOrders}
+                            onClick={downloadSelectedInvoice}
                             className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Print Invoice"
+                            title="Download PDF invoice"
                         >
-                            <Printer size={20} />
+                            <Download size={20} />
                         </button>
                         <button
                             onClick={() => setShowOrderDetails(false)}
@@ -521,11 +529,11 @@ const AdminOrdersPage = () => {
                             </select>
                         </div>
                         <button 
-                            onClick={printOrders}
+                            onClick={downloadSelectedInvoice}
                             className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center gap-2 justify-center"
                         >
-                            <Printer size={18} />
-                            Print Invoice
+                            <Download size={18} />
+                            Download PDF Invoice
                         </button>
                     </div>
                 </div>
