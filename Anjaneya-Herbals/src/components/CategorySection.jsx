@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf } from 'lucide-react';
 import { categoriesApi } from '../services/api';
 
 // Import local cover images
@@ -29,13 +28,6 @@ const COVER_IMAGES = {
     'health-wellness': healthWellnessImg
 };
 
-const LEAF_DECORATIONS = [
-    'left-[3%] top-10 -rotate-12',
-    'right-[5%] top-16 rotate-45',
-    'bottom-8 left-[18%] rotate-[75deg]',
-    'bottom-12 right-[18%] -rotate-45',
-];
-
 const CategorySection = () => {
     const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
@@ -56,14 +48,20 @@ const CategorySection = () => {
 
     return (
         <section className="py-16 bg-brand-cream relative overflow-hidden">
-            {LEAF_DECORATIONS.map((position) => (
-                <Leaf
-                    key={position}
-                    aria-hidden="true"
-                    className={`pointer-events-none absolute h-20 w-20 text-brand-sage/10 sm:h-28 sm:w-28 ${position}`}
-                    strokeWidth={1}
-                />
-            ))}
+            {/* Original spice composition, retained as part of the brand design. */}
+            <img src="/star-anise.webp" alt="" loading="lazy" decoding="async" className="absolute top-10 left-10 w-16 opacity-10 rotate-45 pointer-events-none" />
+            <img src="/clove.webp" alt="" loading="lazy" decoding="async" className="absolute top-20 right-20 w-12 opacity-10 -rotate-12 pointer-events-none" />
+            <img src="/cinnamon.webp" alt="" loading="lazy" decoding="async" className="absolute bottom-10 left-1/4 w-24 opacity-10 rotate-90 pointer-events-none" />
+            <img src="/cardamom.webp" alt="" loading="lazy" decoding="async" className="absolute bottom-20 right-10 w-16 opacity-10 rotate-12 pointer-events-none mix-blend-multiply" />
+            <img src="/turmeric.webp" alt="" loading="lazy" decoding="async" className="absolute top-6 right-48 w-20 opacity-10 -rotate-45 pointer-events-none" />
+            <img src="/black-pepper.webp" alt="" loading="lazy" decoding="async" className="absolute top-17 left-80 w-14 opacity-10 rotate-180 pointer-events-none mix-blend-multiply" />
+
+            <img src="/star-anise.webp" alt="" loading="lazy" decoding="async" className="absolute bottom-1/4 right-1/4 w-14 opacity-10 -rotate-15 pointer-events-none" />
+            <img src="/clove.webp" alt="" loading="lazy" decoding="async" className="absolute top-1/3 left-20 w-10 opacity-10 rotate-45 pointer-events-none" />
+            <img src="/cinnamon.webp" alt="" loading="lazy" decoding="async" className="absolute top-10 right-1/3 w-20 opacity-10 -rotate-45 pointer-events-none" />
+            <img src="/cardamom.webp" alt="" loading="lazy" decoding="async" className="absolute top-2/3 left-10 w-14 opacity-10 rotate-90 pointer-events-none mix-blend-multiply" />
+            <img src="/turmeric.webp" alt="" loading="lazy" decoding="async" className="absolute bottom-10 right-1/3 w-18 opacity-10 rotate-12 pointer-events-none" />
+            <img src="/star-anise.webp" alt="" loading="lazy" decoding="async" className="absolute top-20 left-1/2 w-12 opacity-10 rotate-45 pointer-events-none mix-blend-multiply" />
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-10">
