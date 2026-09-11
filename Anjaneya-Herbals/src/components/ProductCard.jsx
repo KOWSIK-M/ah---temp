@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom';
 import { Check, ShoppingCart, Star } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import toast from 'react-hot-toast';
+import { optimizeCloudinaryImage } from '../utils/imageOptimization';
 
 const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='600'%3E%3Crect width='100%25' height='100%25' fill='%23eef2e7'/%3E%3Cpath d='M245 145c68 28 82 99 15 151-49-51-56-105-15-151Zm-8 157c-30-53-76-69-126-44 22 61 69 78 126 44Z' fill='%239CAF88'/%3E%3Ctext x='50%25' y='72%25' text-anchor='middle' font-family='Arial' font-size='24' fill='%23315b45'%3EAnjaneya Herbals%3C/text%3E%3C/svg%3E";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, priority = false }) {
   const { addToCart } = useCart();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const oldPrice = Number(product.oldPrice || 0);
   const price = Number(product.price || 0);
   const discount = oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
+  const rawImage = product.image || product.imageUrl || fallbackImage;
+  const imageSrc = optimizeCloudinaryImage(rawImage, 600);
 
   const handleAdd = async (event) => {
     event.preventDefault();
@@ -39,9 +42,13 @@ export default function ProductCard({ product }) {
     <article className="group surface-card rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col min-w-0 h-full transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_20px_55px_rgba(30,58,47,.15)]">
       <Link to={`/product/${product.id}`} className="relative block aspect-[4/5] overflow-hidden bg-[#eef2e7]">
         <img
-          src={product.image || product.imageUrl || fallbackImage}
+          src={imageSrc}
           alt={product.name}
-          loading="lazy"
+          width="600"
+          height="750"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = fallbackImage; }}
         />

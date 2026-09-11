@@ -1,92 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Leaf } from 'lucide-react';
 import { categoriesApi } from '../services/api';
 
 // Import local cover images
-import spicesImg from '../assets/category-covers/spices.jpg';
-import dryFruitsImg from '../assets/category-covers/dry-fruits.jpg';
-import hairCareImg from '../assets/category-covers/hair-care.jpg';
-import bodyCareImg from '../assets/category-covers/body-care.jpg';
-import faceCareImg from '../assets/category-covers/face-care.jpg';
-import healthWellnessImg from '../assets/category-covers/health-wellness.jpg';
+import spicesImg from '../assets/category-covers/spices.webp';
+import dryFruitsImg from '../assets/category-covers/dry-fruits.webp';
+import hairCareImg from '../assets/category-covers/hair-care.webp';
+import bodyCareImg from '../assets/category-covers/body-care.webp';
+import faceCareImg from '../assets/category-covers/face-care.webp';
+import healthWellnessImg from '../assets/category-covers/health-wellness.webp';
+
+const DEFAULT_CATEGORIES = [
+    { id: 1, name: "Spices", slug: "spices" },
+    { id: 2, name: "Dry Fruits", slug: "dry-fruits" },
+    { id: 3, name: "Hair Care", slug: "hair-care" },
+    { id: 4, name: "Body Care", slug: "body-care" },
+    { id: 5, name: "Face Care", slug: "face-care" },
+    { id: 6, name: "Health & Wellness", slug: "health-wellness" }
+];
+
+const COVER_IMAGES = {
+    'spices': spicesImg,
+    'dry-fruits': dryFruitsImg,
+    'hair-care': hairCareImg,
+    'body-care': bodyCareImg,
+    'face-care': faceCareImg,
+    'health-wellness': healthWellnessImg
+};
+
+const LEAF_DECORATIONS = [
+    'left-[3%] top-10 -rotate-12',
+    'right-[5%] top-16 rotate-45',
+    'bottom-8 left-[18%] rotate-[75deg]',
+    'bottom-12 right-[18%] -rotate-45',
+];
 
 const CategorySection = () => {
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    // Map slugs to local images
-    const coverImages = {
-        'spices': spicesImg,
-        'dry-fruits': dryFruitsImg,
-        'hair-care': hairCareImg,
-        'body-care': bodyCareImg,
-        'face-care': faceCareImg,
-        'health-wellness': healthWellnessImg
-    };
+    const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
     useEffect(() => {   
+        let active = true;
         const fetchCategories = async () => {
             try {
-                setLoading(true);
                 const data = await categoriesApi.getAll();
-                setCategories(data);
+                if (active && Array.isArray(data) && data.length > 0) setCategories(data);
             } catch (err) {
                 console.error('Error fetching categories:', err);
-                // Fallback to default categories if API fails
-                setCategories([
-                    { id: 1, name: "Spices", slug: "spices" },
-                    { id: 2, name: "Dry Fruits", slug: "dry-fruits" },
-                    { id: 3, name: "Hair Care", slug: "hair-care" },
-                    { id: 4, name: "Body Care", slug: "body-care" },
-                    { id: 5, name: "Face Care", slug: "face-care" },
-                    { id: 6, name: "Health & Wellness", slug: "health-wellness" }
-                ]);
-            } finally {
-                setLoading(false);
             }
         };
 
         fetchCategories();
+        return () => { active = false; };
     }, []);
-
-    if (loading) {
-        return (
-            <section className="py-16 bg-brand-cream">
-                <div className="container mx-auto px-4">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-serif font-bold text-brand-black mb-3">Shop by Category</h2>
-                        <div className="w-20 h-1 bg-brand-yellow mx-auto rounded-full"></div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="animate-pulse">
-                                <div className="w-full max-w-36 aspect-[3/4] mx-auto bg-gray-200 rounded-t-[4rem] rounded-b-md"></div>
-                                <div className="h-4 bg-gray-200 mt-4 mx-auto w-24 rounded"></div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-        );
-    }
 
     return (
         <section className="py-16 bg-brand-cream relative overflow-hidden">
-            {/* Background Decorations */}
-            <img src="/star-anise.png" alt="" className="absolute top-10 left-10 w-16 opacity-10 rotate-45 pointer-events-none" />
-            <img src="/clove.png" alt="" className="absolute top-20 right-20 w-12 opacity-10 -rotate-12 pointer-events-none" />
-            <img src="/cinnamon.png" alt="" className="absolute bottom-10 left-1/4 w-24 opacity-10 rotate-90 pointer-events-none" />
-            <img src="/cardamom.jpg" alt="" className="absolute bottom-20 right-10 w-16 opacity-10 rotate-12 pointer-events-none mix-blend-multiply" />
-            <img src="/turmeric.png" alt="" className="absolute top-6 right-48 w-20 opacity-10 -rotate-45 pointer-events-none" />
-            <img src="/black-pepper.jpg" alt="" className="absolute top-17 left-80 w-14 opacity-10 rotate-180 pointer-events-none mix-blend-multiply" />
-
-            {/* Repeated Elements for Fuller Background */}
-            <img src="/star-anise.png" alt="" className="absolute bottom-1/4 right-1/4 w-14 opacity-10 -rotate-15 pointer-events-none" />
-            <img src="/clove.png" alt="" className="absolute top-1/3 left-20 w-10 opacity-10 rotate-45 pointer-events-none" />
-            <img src="/cinnamon.png" alt="" className="absolute top-10 right-1/3 w-20 opacity-10 -rotate-45 pointer-events-none" />
-            <img src="/cardamom.jpg" alt="" className="absolute top-2/3 left-10 w-14 opacity-10 rotate-90 pointer-events-none mix-blend-multiply" />
-            <img src="/turmeric.png" alt="" className="absolute bottom-10 right-1/3 w-18 opacity-10 rotate-12 pointer-events-none" />
-            <img src="/star-anise.png" alt="" className="absolute top-20 left-1/2 w-12 opacity-10 rotate-45 pointer-events-none mix-blend-multiply" />
+            {LEAF_DECORATIONS.map((position) => (
+                <Leaf
+                    key={position}
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute h-20 w-20 text-brand-sage/10 sm:h-28 sm:w-28 ${position}`}
+                    strokeWidth={1}
+                />
+            ))}
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-10">
@@ -103,8 +80,12 @@ const CategorySection = () => {
                         >
                             <div className="relative w-full max-w-36 aspect-[3/4] mx-auto overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 rounded-t-[4rem] rounded-b-md border border-brand-sand group-hover:border-brand-yellow">
                                 <img
-                                    src={coverImages[cat.slug] || cat.imageUrl || `https://images.unsplash.com/photo-1544367563-12123d815079?w=400`}
+                                    src={COVER_IMAGES[cat.slug] || cat.imageUrl || `https://images.unsplash.com/photo-1544367563-12123d815079?w=400`}
                                     alt={cat.name}
+                                    width="400"
+                                    height="534"
+                                    loading="eager"
+                                    decoding="async"
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out grayscale-[20%] group-hover:grayscale-0"
                                     onError={(e) => {
                                         e.target.onerror = null; // prevent loop if Unsplash also fails

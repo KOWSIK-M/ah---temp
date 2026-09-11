@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -8,47 +8,53 @@ import { CartProvider } from './contexts/CartContext';
 
 // Pages
 import HomePage from './pages/HomePage';
-import PasswordRecoveryPage from './pages/PasswordRecoveryPage';
-import InformationPage from './pages/InformationPage';
-import StoresPage from './pages/StoresPage';
-import ContactPage from './pages/ContactPage';
-import AboutPage from './pages/AboutPage';
-import ProductDetailsPage from './pages/ProductDetailsPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import AllProductsPage from './pages/AllProductsPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ProfilePage from './pages/ProfilePage';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import TrackOrderPage from './pages/TrackOrderPage';
-import WishlistPage from './pages/WishlistPage';
-import NotFoundPage from './pages/NotFoundPage';
+const PasswordRecoveryPage = lazy(() => import('./pages/PasswordRecoveryPage'));
+const InformationPage = lazy(() => import('./pages/InformationPage'));
+const StoresPage = lazy(() => import('./pages/StoresPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ProductDetailsPage = lazy(() => import('./pages/ProductDetailsPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const AllProductsPage = lazy(() => import('./pages/AllProductsPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Admin Pages
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import AdminProductsPage from './pages/admin/AdminProductsPage';
-import AdminProductFormPage from './pages/admin/AdminProductFormPage';
-import AdminOrdersPage from './pages/admin/AdminOrdersPage';
-import AdminCustomersPage from './pages/admin/AdminCustomersPage';
-import AdminCouponsPage from './pages/admin/AdminCouponsPage';
-import AdminLoginPage from './pages/admin/AdminLoginPage';
-import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage'));
+const AdminProductFormPage = lazy(() => import('./pages/admin/AdminProductFormPage'));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'));
+const AdminCustomersPage = lazy(() => import('./pages/admin/AdminCustomersPage'));
+const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage'));
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/admin/AdminRoute';
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
-import ChatWidget from './components/ChatWidget';
+const OAuth2RedirectHandler = lazy(() => import('./components/OAuth2RedirectHandler'));
+const ChatWidget = lazy(() => import('./components/ChatWidget'));
+
+const PageLoader = () => (
+  <div className="flex min-h-[55vh] items-center justify-center bg-brand-cream" role="status" aria-label="Loading page">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-sage/30 border-t-brand-moss" />
+  </div>
+);
 
 function App() {
   const location = useLocation();
   return (
     <AuthProvider>
       <CartProvider>
+        <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Admin Login — public, no auth guard */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -124,10 +130,15 @@ function App() {
                     error: { duration: 4000, style: { border: '1px solid #B3543D' }, iconTheme: { primary: '#B3543D', secondary: '#fff' } },
                   }}
                 />
-                {location.pathname === '/' && <ChatWidget />}
+                {location.pathname === '/' && (
+                  <Suspense fallback={null}>
+                    <ChatWidget />
+                  </Suspense>
+                )}
               </div>
             } />
           </Routes>
+        </Suspense>
       </CartProvider>
     </AuthProvider>
   );

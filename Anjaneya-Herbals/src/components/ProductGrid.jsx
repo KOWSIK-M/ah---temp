@@ -120,8 +120,12 @@ const ProductGrid = ({ title = "Best Sellers", categoryId }) => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-7">
-                    {mappedProducts.map(product => (
-                        <ProductCard key={product.id} product={product} />
+                    {mappedProducts.map((product, index) => (
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            priority={title === "Best Sellers" && index < 4}
+                        />
                     ))}
                 </div>
 

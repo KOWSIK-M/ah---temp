@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, HeartHandshake, Leaf, MapPin, PackageCheck, Scale, Sprout, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import herbalTea from '../assets/hero-herbal-tea.jpg';
-import turmeric from '../assets/hero-turmeric.jpg';
+import herbalTea from '../assets/hero-herbal-tea.webp';
+import turmeric from '../assets/hero-turmeric.webp';
 
 const values = [
   { icon: Leaf, title: 'Rooted in tradition', text: 'We present herbal and Ayurvedic-inspired products with clear ingredients, directions and responsible product information.' },

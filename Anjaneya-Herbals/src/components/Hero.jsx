@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import herbalTeaImage from '../assets/hero-herbal-tea.jpg';
-import turmericImage from '../assets/hero-turmeric.jpg';
-import dryFruitsImage from '../assets/hero-dry-fruits.jpg';
+import herbalTeaImage from '../assets/hero-herbal-tea.webp';
+import turmericImage from '../assets/hero-turmeric.webp';
+import dryFruitsImage from '../assets/hero-dry-fruits.webp';
 
 const slides = [
   {
@@ -59,6 +59,11 @@ const Hero = () => {
           <motion.img
             src={slides[current].image}
             alt={slides[current].title}
+            width="1600"
+            height="1000"
+            loading={current === 0 ? "eager" : "lazy"}
+            fetchPriority={current === 0 ? "high" : "auto"}
+            decoding="async"
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 6, ease: "easeOut" }}
